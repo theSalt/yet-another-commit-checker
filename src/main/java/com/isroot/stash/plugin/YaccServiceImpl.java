@@ -10,7 +10,6 @@ import com.atlassian.stash.scm.git.GitRefPattern;
 import com.google.common.collect.Lists;
 import com.isroot.stash.plugin.checks.BranchNameCheck;
 import com.isroot.stash.plugin.errors.YaccError;
-import com.isroot.stash.plugin.jira.JiraLookupsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -176,17 +175,8 @@ public class YaccServiceImpl implements YaccService {
             /* Remove issues that contain non-existent project keys */
             issues = Lists.newArrayList();
             for (IssueKey issueKey : extractedKeys) {
-                try {
-                    if (jiraService.doesProjectExist(issueKey.getProjectKey())) {
-                        issues.add(issueKey);
-                    }
-                }
-                catch (JiraLookupsException e) {
-                    errors.add(new YaccError("Unable to validate JIRA projects"));
-                    errors.add(new YaccError("Some JIRA instances returned errors:"));
-                    for (String error : e.getPrintableErrors()) {
-                        errors.add(new YaccError(error));
-                    }
+                if (jiraService.doesProjectExist(issueKey.getProjectKey())) {
+                    issues.add(issueKey);
                 }
             }
         }
@@ -209,24 +199,13 @@ public class YaccServiceImpl implements YaccService {
     private List<YaccError> checkJiraIssue(Settings settings, IssueKey issueKey) {
         List<YaccError> errors = Lists.newArrayList();
 
-        try {
-            if (!jiraService.doesIssueExist(issueKey)) {
-                errors.add(new YaccError(YaccError.Type.ISSUE_JQL, "%s: JIRA Issue does not exist",
-                        issueKey.getFullyQualifiedIssueKey()));
-            }
-            else {
-                String jqlQuery = settings.getString("issueJqlMatcher");
-                if (jqlQuery != null && !jqlQuery.isEmpty()) {
-                    if (!jiraService.doesIssueMatchJqlQuery(jqlQuery, issueKey)) {
-                        errors.add(new YaccError(YaccError.Type.ISSUE_JQL, "%s: JIRA Issue does not match JQL Query: %s",
-                                issueKey.getFullyQualifiedIssueKey(), jqlQuery));
-                    }
-                }
-            }
-        }
-        catch (JiraLookupsException e) {
-            for (String error : e.getPrintableErrors()) {
-                errors.add(new YaccError(error));
+        errors.addAll(jiraService.doesIssueExist(issueKey));
+
+        if(errors.isEmpty()) {
+            String jqlQuery = settings.getString("issueJqlMatcher");
+
+            if (jqlQuery != null && !jqlQuery.isEmpty()) {
+                errors.addAll(jiraService.doesIssueMatchJqlQuery(jqlQuery, issueKey));
             }
         }
 

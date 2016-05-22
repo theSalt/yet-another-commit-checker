@@ -1,6 +1,5 @@
 package ut.com.isroot.stash.plugin;
 
-import com.atlassian.applinks.api.ApplicationLink;
 import com.atlassian.applinks.api.CredentialsRequiredException;
 import com.atlassian.bitbucket.auth.AuthenticationContext;
 import com.atlassian.bitbucket.repository.RefChange;
@@ -10,6 +9,7 @@ import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.user.ApplicationUser;
 import com.atlassian.bitbucket.user.UserType;
 import com.atlassian.sal.api.net.ResponseException;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.isroot.stash.plugin.CommitsService;
 import com.isroot.stash.plugin.IssueKey;
@@ -18,18 +18,12 @@ import com.isroot.stash.plugin.YaccCommit;
 import com.isroot.stash.plugin.YaccService;
 import com.isroot.stash.plugin.YaccServiceImpl;
 import com.isroot.stash.plugin.errors.YaccError;
-import com.isroot.stash.plugin.jira.JiraLookupsException;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import ut.com.isroot.stash.plugin.mock.MockApplicationLink;
 
-import java.net.URI;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -197,7 +191,7 @@ public class YaccServiceImplTest {
     }
 
     @Test
-    public void testCheckRefChange_requireJiraIssue_rejectIfNoJiraIssuesAreFound() throws Exception {
+    public void testCheckRefChange_requireJiraIssue_rejectIfNoJiraIssuesAreFound() {
         when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
 
@@ -215,7 +209,6 @@ public class YaccServiceImplTest {
         when(settings.getBoolean("ignoreUnknownIssueProjectKeys", false)).thenReturn(true);
 
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
-        when(jiraService.doesIssueExist(new IssueKey("ABC-123"))).thenReturn(true);
         when(jiraService.doesProjectExist("ABC")).thenReturn(true);
         when(jiraService.doesProjectExist("UTF")).thenReturn(false);
 
@@ -249,7 +242,6 @@ public class YaccServiceImplTest {
     public void testCheckRefChange_requireJiraIssue_allowedIfValidJiraIssueIsFound() throws Exception {
         when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
-        when(jiraService.doesIssueExist(any(IssueKey.class))).thenReturn(true);
 
         YaccCommit commit = mockCommit();
         when(commit.getMessage()).thenReturn("ABC-123: this commit has valid issue id");
@@ -277,12 +269,11 @@ public class YaccServiceImplTest {
     }
 
     @Test
-    @Ignore
-    public void testCheckRefChange_requireJiraIssue_errorReturnedIfNoJiraAuth() throws Exception {
+    public void testCheckRefChange_requireJiraIssue_errorsPassedThroughIfTheyAreReturned() {
         when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
-        when(jiraService.doesIssueExist(any(IssueKey.class))).thenThrow(credRequired);
-        when(credRequired.getAuthorisationURI()).thenReturn(new URI("http://localhost/link"));
+        when(jiraService.doesIssueExist(any(IssueKey.class)))
+                .thenReturn(Lists.newArrayList(new YaccError("some error")));
 
         YaccCommit commit = mockCommit();
         when(commit.getMessage()).thenReturn("ABC-123: this commit has valid issue id");
@@ -290,29 +281,8 @@ public class YaccServiceImplTest {
 
 
         List<YaccError> errors = yaccService.checkRefChange(null, settings, mockRefChange());
-        assertThat(errors).containsOnly(new YaccError("deadbeef: ABC-123: Unable to validate JIRA issue because there was an authentication failure when communicating with JIRA."),
-                                        new YaccError("deadbeef: To authenticate, visit http://localhost/link in a web browser."));
-        verify(jiraService).doesIssueExist(new IssueKey("ABC-123"));
-    }
-
-    @Test
-    public void testCheckRefChange_requireJiraIssue_errorReturnedIfJiraLookupsExceptionThrown()
-            throws Exception {
-        when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
-        when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
-
-        Map<ApplicationLink, Throwable> linkErrors = new HashMap<>();
-        linkErrors.put(new MockApplicationLink("JIRA Instance Name"), new Exception("some arbitrary error"));
-        JiraLookupsException jiraLookupsException = new JiraLookupsException(linkErrors);
-        when(jiraService.doesIssueExist(any(IssueKey.class))).thenThrow(jiraLookupsException);
-
-        YaccCommit commit = mockCommit();
-        when(commit.getMessage()).thenReturn("ABC-123: this commit has valid issue id");
-        when(commitsService.getNewCommits(any(Repository.class), any(RefChange.class))).thenReturn(Sets.newHashSet(commit));
-
-        List<YaccError> errors = yaccService.checkRefChange(null, settings, mockRefChange());
-        assertThat(errors).containsOnly(new YaccError("deadbeef: JIRA Instance Name: Internal error: some arbitrary error. Check server logs for details."));
-        verify(jiraService).doesIssueExist(new IssueKey("ABC-123"));
+        assertThat(errors).containsExactly(new YaccError("deadbeef: some error"));
+        verify(jiraService).doesIssueExist(new IssueKey("ABC", "123"));
     }
 
     @Test

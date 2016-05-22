@@ -1,78 +1,61 @@
 package com.isroot.stash.plugin.jira;
 
-import com.atlassian.applinks.api.ApplicationLink;
 import com.atlassian.applinks.api.CredentialsRequiredException;
-import com.atlassian.sal.api.net.ResponseException;
-import com.atlassian.sal.api.net.ResponseStatusException;
-import com.google.common.base.Joiner;
+import com.atlassian.applinks.api.ReadOnlyApplicationLink;
+import com.isroot.stash.plugin.errors.YaccError;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import java.util.stream.Collectors;
 
 /**
  * @author Bradley Baetz
  */
-public class JiraLookupsException extends Exception {
-    private final Map<ApplicationLink, Throwable> errors;
+class JiraLookupsException extends Exception {
+    private final Map<ReadOnlyApplicationLink, String> errors = new LinkedHashMap<>();
 
-    public JiraLookupsException(@Nonnull Map<ApplicationLink, Throwable> errors) {
-        checkNotNull(errors);
-        checkState(!errors.isEmpty(), "No errors provided");
+    public JiraLookupsException() {
 
-        this.errors = errors;
     }
 
-    @Nonnull
-    public Map<ApplicationLink, Throwable> getErrors() {
-        return errors;
+    public void addError(ReadOnlyApplicationLink link, String message) {
+        errors.put(link, message);
     }
 
-    /**
-     * FIXME: return YaccError instead of string
-     */
-    @Nonnull
-    public List<String> getPrintableErrors() {
-        List<String> ret = new ArrayList<>();
+    public void addError(ReadOnlyApplicationLink link, Exception ex) {
+        String error;
 
-        for (Map.Entry<ApplicationLink, Throwable> entry : errors.entrySet()) {
-            String errorStr;
-
-            Throwable ex = entry.getValue();
-
-            if (ex instanceof CredentialsRequiredException) {
-                CredentialsRequiredException credentialsRequiredException = (CredentialsRequiredException) ex;
-                errorStr = "Could not authenticate. Visit " + credentialsRequiredException.getAuthorisationURI().toASCIIString() + " to link your Stash account to your JIRA account";
-            }
-            else if (ex instanceof ResponseStatusException) {
-                ResponseStatusException responseStatusException = (ResponseStatusException) ex;
-                errorStr = responseStatusException.getResponse().getStatusText();
-            }
-            else if (ex instanceof ResponseException) {
-                ResponseException responseException = (ResponseException) ex;
-                if (responseException.getCause() != null) {
-                    errorStr = responseException.getCause().getMessage();
-                }
-                else {
-                    errorStr = responseException.getMessage();
-                }
-            }
-            else {
-                errorStr = "Internal error: " + ex.getMessage() + ". Check server logs for details.";
-            }
-
-            ret.add(entry.getKey().getName() + ": " + errorStr);
+        if (ex instanceof CredentialsRequiredException) {
+            CredentialsRequiredException credentialsRequiredException = (CredentialsRequiredException) ex;
+            error = "Could not authenticate. Visit "
+                    + credentialsRequiredException.getAuthorisationURI().toASCIIString()
+                    + " to link your Stash account to your JIRA account";
+        }
+        else {
+            error = "Internal error: " + ex.getMessage() + ". Check server logs for details.";
         }
 
-        return ret;
+        errors.put(link, error);
     }
 
-    @Override
-    public String getMessage() {
-        return "JIRA lookup errors: " + Joiner.on(", ").join(getPrintableErrors());
+    public boolean hasErrors() {
+        return !errors.isEmpty();
+    }
+
+    public void addMessageForApplicationLinksNotPresent(Iterable<ReadOnlyApplicationLink> links, String message) {
+        for (ReadOnlyApplicationLink link : links) {
+            if (!errors.containsKey(link)) {
+                errors.put(link, message);
+            }
+        }
+    }
+
+    @Nonnull
+    public List<YaccError> getYaccErrors() {
+        return errors.entrySet().stream()
+                .map(entry -> new YaccError(entry.getKey().getName() + ": " + entry.getValue()))
+                .collect(Collectors.toList());
     }
 }

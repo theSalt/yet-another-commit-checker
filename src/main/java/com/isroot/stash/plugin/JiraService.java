@@ -1,6 +1,6 @@
 package com.isroot.stash.plugin;
 
-import com.isroot.stash.plugin.jira.JiraLookupsException;
+import com.isroot.stash.plugin.errors.YaccError;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -13,8 +13,8 @@ import java.util.List;
  */
 public interface JiraService {
     boolean doesJiraApplicationLinkExist();
-    boolean doesIssueMatchJqlQuery(String jqlQuery, IssueKey issueKey) throws JiraLookupsException;
-    boolean doesIssueExist(IssueKey issueKey) throws JiraLookupsException;
-    boolean doesProjectExist(String projectKey) throws JiraLookupsException;
+    List<YaccError> doesIssueMatchJqlQuery(String jqlQuery, IssueKey issueKey);
+    List<YaccError> doesIssueExist(IssueKey issueKey);
+    boolean doesProjectExist(String projectKey);
     List<String> checkJqlQuery(@Nonnull String jqlQuery);
 }

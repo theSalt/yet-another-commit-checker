@@ -32,7 +32,7 @@
         <interface>com.isroot.stash.plugin.CommitsService</interface>
     </component>
 
-    <component key="jiraService" class="com.isroot.stash.plugin.JiraServiceImpl" public="true">
+    <component key="jiraService" class="com.isroot.stash.plugin.jira.JiraServiceImpl" public="true">
         <interface>com.isroot.stash.plugin.JiraService</interface>
     </component>
 
