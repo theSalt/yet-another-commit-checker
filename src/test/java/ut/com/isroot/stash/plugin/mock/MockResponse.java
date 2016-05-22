@@ -24,7 +24,7 @@ class MockResponse implements Response {
 
     @Override
     public String getResponseBodyAsString() throws ResponseException {
-        throw new UnsupportedOperationException();
+        return "MOCK RESPONSE BODY";
     }
 
     @Override

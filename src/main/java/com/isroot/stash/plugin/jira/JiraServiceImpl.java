@@ -166,9 +166,13 @@ public class JiraServiceImpl implements JiraService {
 
                 req.setHeader("Content-Type", "application/json");
 
-                Map<String, String> request = new HashMap<>();
+                Map<String, Object> request = new HashMap<>();
                 request.put("jql", jqlQuery);
-                request.put("fields", "summary");
+
+                List<String> requestedFields = new ArrayList<>();
+                requestedFields.add("summary");
+                request.put("fields", requestedFields);
+
                 req.setEntity(new Gson().toJson(request));
 
                 String jsonResponse = req.execute();
@@ -193,6 +197,12 @@ public class JiraServiceImpl implements JiraService {
                     ResponseStatusException statusException = (ResponseStatusException) e;
 
                     log.debug("status code {}", statusException.getResponse().getStatusCode(), e);
+
+                    try {
+                        log.debug("response entity: {}", statusException.getResponse().getResponseBodyAsString());
+                    } catch (ResponseException e1) {
+                        log.error("error getting response body", e);
+                    }
 
                     if (statusException.getResponse().getStatusCode() == 400) {
                         // Only treat 400 as an error if we aren't explicitly looking for 200.
