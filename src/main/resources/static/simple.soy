@@ -25,11 +25,11 @@
 	{/call}
 
 	{call aui.form.textField}
-		{param id: 'MatchingAuthorEmailDomainRegex' /}
-		{param labelContent: 'Commit Author Email Domain Regex ' /}
-		{param value:$config ? $config['MatchingAuthorEmailDomainRegex'] : null /}
-		{param descriptionText: 'Require that commit email domain match this regular expression.' /}
-		{param errorTexts: $errors ? $errors['MatchingAuthorEmailDomainRegex'] : null /}
+		{param id: 'commiterEmailRegex' /}
+		{param labelContent: 'Commit Author Email Regex ' /}
+		{param value:$config ? $config['commiterEmailRegex'] : null /}
+		{param descriptionText: 'Require that commit email match this regular expression.' /}
+		{param errorTexts: $errors ? $errors['commiterEmailRegex'] : null /}
 	{/call}
 
 	{call aui.form.textField}

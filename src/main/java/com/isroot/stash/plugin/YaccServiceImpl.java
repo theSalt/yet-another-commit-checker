@@ -139,16 +139,16 @@ public class YaccServiceImpl implements YaccService {
         return errors;
     }
 
-    private List<YaccError> checkEmailDomainRegex(Settings settings, YaccCommit commit) {
+    private List<YaccError> checkCommiterEmailRegex(Settings settings, YaccCommit commit) {
         List<YaccError> errors = Lists.newArrayList();
-        String regex = settings.getString("MatchingAuthorEmailDomainRegex");
+        String regex = settings.getString("commiterEmailRegex");
         //String regex = "^.*\\@"+emailDomain+"$";
         if(!isNullOrEmpty(regex)) {
             Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE);
             Matcher matcher = pattern.matcher(commit.getCommitter().getEmailAddress().toLowerCase());
             if(!matcher.matches()) {
-                errors.add(new YaccError(YaccError.Type.COMMITTER_EMAIL_DOMAIN,
-                    String.format("commiter email domain regex '%s' not match user email '%s'", regex,
+                errors.add(new YaccError(YaccError.Type.COMMITTER_EMAIL_REGEX,
+                    String.format("commiter email regex '%s' does not match user email '%s'", regex,
                     commit.getCommitter().getEmailAddress())));
             }
         }
@@ -277,7 +277,7 @@ public class YaccServiceImpl implements YaccService {
                     commit.getCommitter().getEmailAddress())));
         }
 
-        errors.addAll(checkEmailDomainRegex(settings, commit));
+        errors.addAll(checkCommiterEmailRegex(settings, commit));
         return errors;
     }
 
