@@ -209,7 +209,7 @@ public class YaccPreReceiveHookTest {
     public void testOnReceive_globalHookSettingsPassedToHook() {
         globalSettingsMap.put("commitMessageRegex", "bar");
         globalSettingsMap.put("requireMatchingAuthorEmail", "true");
-        globalSettingsMap.put("commiterEmailRegex", "email.com");
+        globalSettingsMap.put("committerEmailRegex", "email.com");
 
         yaccPreReceiveHook.onReceive(repository, getMockRefChanges(), hookResponse);
 
@@ -221,7 +221,7 @@ public class YaccPreReceiveHookTest {
                 .contains(
                         entry("commitMessageRegex", "bar"),
                         entry("requireMatchingAuthorEmail", true),
-                        entry("commiterEmailRegex","email.com"));
+                        entry("committerEmailRegex","email.com"));
     }
 
     @Test

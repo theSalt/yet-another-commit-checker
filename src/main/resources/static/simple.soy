@@ -25,11 +25,11 @@
 	{/call}
 
 	{call aui.form.textField}
-		{param id: 'commiterEmailRegex' /}
+		{param id: 'committerEmailRegex' /}
 		{param labelContent: 'Commit Author Email Regex ' /}
-		{param value:$config ? $config['commiterEmailRegex'] : null /}
+		{param value:$config ? $config['committerEmailRegex'] : null /}
 		{param descriptionText: 'Require that commit email match this regular expression.' /}
-		{param errorTexts: $errors ? $errors['commiterEmailRegex'] : null /}
+		{param errorTexts: $errors ? $errors['committerEmailRegex'] : null /}
 	{/call}
 
 	{call aui.form.textField}
@@ -103,11 +103,11 @@
   {/call}
 
   {call aui.form.textareaField}
-    {param id: 'errorMessage.COMMITTER_EMAIL_DOMAIN' /}
-    {param labelContent: 'Committer Email Domain Error' /}
-    {param value: $config['errorMessage.COMMITTER_EMAIL_DOMAIN'] /}
-    {param errorTexts: $errors ? $errors['errorMessage.COMMITTER_EMAIL_DOMAIN'] : null /}
-    {param descriptionText: 'If present, this text will be shown when the user email domain not match regex provided.' /}
+    {param id: 'errorMessage.COMMITTER_EMAIL_REGEX' /}
+    {param labelContent: 'Committer Email Regex Error' /}
+    {param value: $config['errorMessage.COMMITTER_EMAIL_REGEX'] /}
+    {param errorTexts: $errors ? $errors['errorMessage.COMMITTER_EMAIL_REGEX'] : null /}
+    {param descriptionText: 'If present, this text will be shown when the Committer Email Regex check fails.' /}
     {param rows: '4' /}
   {/call}
 

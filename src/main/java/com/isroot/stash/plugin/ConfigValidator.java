@@ -32,6 +32,7 @@ public class ConfigValidator implements RepositorySettingsValidator {
     public void validate(@Nonnull Settings settings, @Nonnull SettingsValidationErrors errors,
                          @Nonnull Repository repository) {
         validationRegex(settings, errors, "commitMessageRegex");
+        validationRegex(settings, errors, "committerEmailRegex");
         validationRegex(settings, errors, "excludeByRegex");
         validationRegex(settings, errors, "branchNameRegex");
 
