@@ -125,10 +125,10 @@ public class YaccServiceImpl implements YaccService {
         List<YaccError> errors = Lists.newArrayList();
 
         String regex = settings.getString("commitMessageRegex");
-        if(isNullOrEmpty(regex) == false) {
+        if(!isNullOrEmpty(regex)) {
             Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE);
             Matcher matcher = pattern.matcher(commit.getMessage());
-            if(matcher.matches() == false) {
+            if(!matcher.matches()) {
                 errors.add(new YaccError(YaccError.Type.COMMIT_REGEX,
                         "commit message doesn't match regex: " + regex));
             }
@@ -137,13 +137,28 @@ public class YaccServiceImpl implements YaccService {
         return errors;
     }
 
+    private List<YaccError> checkCommitterEmailRegex(Settings settings, YaccCommit commit) {
+        List<YaccError> errors = Lists.newArrayList();
+        String regex = settings.getString("committerEmailRegex");
+        if(!isNullOrEmpty(regex)) {
+            Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE);
+            Matcher matcher = pattern.matcher(commit.getCommitter().getEmailAddress().toLowerCase());
+            if(!matcher.matches()) {
+                errors.add(new YaccError(YaccError.Type.COMMITTER_EMAIL_REGEX,
+                    String.format("committer email regex '%s' does not match user email '%s'", regex,
+                    commit.getCommitter().getEmailAddress())));
+            }
+        }
+
+        return errors;
+    }
     private List<IssueKey> extractJiraIssuesFromCommitMessage(Settings settings, YaccCommit commit) {
         String message = commit.getMessage();
 
         // If a commit message regex is present, see if it contains a group 1 that can be used to located JIRA issues.
         // If not, just ignore it.
         String regex = settings.getString("commitMessageRegex");
-        if(isNullOrEmpty(regex) == false) {
+        if(!isNullOrEmpty(regex)) {
             Pattern pattern = Pattern.compile(regex);
             Matcher matcher = pattern.matcher(message);
             if(matcher.matches() && matcher.groupCount() > 0) {
@@ -184,8 +199,8 @@ public class YaccServiceImpl implements YaccService {
             issues = extractedKeys;
         }
 
-        if (issues.isEmpty() == false) {
-            for (IssueKey issueKey : issues) {
+        if(!issues.isEmpty()) {
+            for(IssueKey issueKey : issues) {
                 errors.addAll(checkJiraIssue(settings, issueKey));
             }
         }
@@ -214,7 +229,6 @@ public class YaccServiceImpl implements YaccService {
 
     private List<YaccError> checkCommitterEmail(@Nonnull Settings settings, @Nonnull YaccCommit commit, @Nonnull ApplicationUser stashUser) {
         final boolean requireMatchingAuthorEmail = settings.getBoolean("requireMatchingAuthorEmail", false);
-
         List<YaccError> errors = Lists.newArrayList();
 
         // while the email address is not marked as @Nullable, its not @Notnull either
@@ -235,6 +249,7 @@ public class YaccServiceImpl implements YaccService {
                     commit.getCommitter().getEmailAddress())));
         }
 
+        errors.addAll(checkCommitterEmailRegex(settings, commit));
         return errors;
     }
 

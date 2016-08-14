@@ -25,6 +25,14 @@
 	{/call}
 
 	{call aui.form.textField}
+		{param id: 'committerEmailRegex' /}
+		{param labelContent: 'Commit Author Email Regex ' /}
+		{param value:$config ? $config['committerEmailRegex'] : null /}
+		{param descriptionText: 'Require that commit email match this regular expression.' /}
+		{param errorTexts: $errors ? $errors['committerEmailRegex'] : null /}
+	{/call}
+
+	{call aui.form.textField}
 		{param id: 'commitMessageRegex' /}
 		{param labelContent: 'Commit Message Regex' /}
 		{param value: $config['commitMessageRegex'] /}
@@ -91,6 +99,15 @@
     {param value: $config['errorMessage.COMMITTER_EMAIL'] /}
     {param errorTexts: $errors ? $errors['errorMessage.COMMITTER_EMAIL'] : null /}
     {param descriptionText: 'If present, this text will be shown when the Require Matching Committer Email check fails.' /}
+    {param rows: '4' /}
+  {/call}
+
+  {call aui.form.textareaField}
+    {param id: 'errorMessage.COMMITTER_EMAIL_REGEX' /}
+    {param labelContent: 'Committer Email Regex Error' /}
+    {param value: $config['errorMessage.COMMITTER_EMAIL_REGEX'] /}
+    {param errorTexts: $errors ? $errors['errorMessage.COMMITTER_EMAIL_REGEX'] : null /}
+    {param descriptionText: 'If present, this text will be shown when the Committer Email Regex check fails.' /}
     {param rows: '4' /}
   {/call}
 

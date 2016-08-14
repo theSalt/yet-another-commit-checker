@@ -78,6 +78,7 @@ public class SettingsTest {
     private void verifyDefaults(YaccSettingsCommon yaccSettingsCommon) {
         yaccSettingsCommon.verifyRequireMatchingAuthorName(false)
                 .verifyRequireMatchingAuthorEmail(false)
+                .verifyCommitterEmailRegex("")
                 .verifyCommitMessageRegex("")
                 .verifyErrorMessageHeader("")
                 .verifyErrorMessageCommitterEmail("")
@@ -93,20 +94,23 @@ public class SettingsTest {
 
     private void setInvalidValues(YaccSettingsCommon yaccSettingsCommon) {
         yaccSettingsCommon.setCommitMessageRegex("(invalid regex")
-                .setExcludeByRegex("(invalid regex");
+                .setExcludeByRegex("(invalid regex")
+                .setCommitterEmailRegex("(invalid regex");
     }
 
     private void verifyValidationErrors(YaccSettingsCommon yaccSettingsCommon) {
         assertThat(yaccSettingsCommon.getFieldIdsWithErrors())
-                .containsOnly("commitMessageRegex", "excludeByRegex");
+                .containsOnly("commitMessageRegex", "excludeByRegex", "committerEmailRegex");
     }
 
     private void setValues(YaccSettingsCommon yaccSettingsCommon) {
         yaccSettingsCommon.clickRequireMatchingAuthorEmail()
                 .clickRequireMatchingAuthorName()
+                .setCommitterEmailRegex(".*")
                 .setCommitMessageRegex(".*")
                 .setErrorMessageHeader("header")
                 .setErrorMessageCommitterEmail("email")
+                .setErrorMessageCommitterEmailRegex("committer email regex")
                 .setErrorMessageCommitterName("name")
                 .setErrorMessageCommitRegex("commit regex")
                 .setErrorMessageIssueJql("issue jql")
@@ -120,9 +124,11 @@ public class SettingsTest {
     private void verifyValues(YaccSettingsCommon yaccSettingsCommon) {
         yaccSettingsCommon.verifyRequireMatchingAuthorEmail(true)
                 .verifyRequireMatchingAuthorName(true)
+                .verifyCommitterEmailRegex(".*")
                 .verifyCommitMessageRegex(".*")
                 .verifyErrorMessageHeader("header")
                 .verifyErrorMessageCommitterEmail("email")
+                .verifyErrorMessageCommitterEmailRegex("committer email regex")
                 .verifyErrorMessageCommitterName("name")
                 .verifyErrorMessageCommitRegex("commit regex")
                 .verifyErrorMessageIssueJql("issue jql")

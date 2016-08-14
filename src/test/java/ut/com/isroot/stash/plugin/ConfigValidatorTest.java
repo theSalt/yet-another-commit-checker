@@ -125,6 +125,7 @@ public class ConfigValidatorTest {
         verify(settings).getString("commitMessageRegex");
         verifyZeroInteractions(settingsValidationErrors);
     }
+
     @Test
     public void testValidate_commitMessageRegex_badRegex() {
         when(settings.getString("commitMessageRegex")).thenReturn(")");
@@ -155,5 +156,15 @@ public class ConfigValidatorTest {
         verify(settings).getString("branchNameRegex");
         verify(settingsValidationErrors).addFieldError("branchNameRegex", "Invalid Regex: Unmatched closing ')'\n" +
                 ")");
+    }
+
+    @Test
+    public void testValidate_committerEmailRegex_isValidated() {
+        when(settings.getString("committerEmailRegex")).thenReturn(")");
+
+        configValidator.validate(settings, settingsValidationErrors, repository);
+
+        verify(settingsValidationErrors)
+                .addFieldError("committerEmailRegex", "Invalid Regex: Unmatched closing ')'\n)");
     }
 }

@@ -1,5 +1,9 @@
 # YACC Changelog
 
+### 1.12 (UNRELEASED)
+
+* Feature: Check committer email against regex (ex: validate email domain). Thanks [@mludy](https://github.com/mludy)!
+
 ### 1.11
 
 * Performance: global hook no longer examines pushes if no global settings are enabled

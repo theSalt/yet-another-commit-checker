@@ -57,6 +57,10 @@ If enabled, committer email must match the email of the Bitbucket Server user.
 
 If enabled, committer name must match the name of the Bitbucket Server user.
 
+#### Committer Email Regex
+
+If a regex is present, the committer email must match regex.
+
 ####Commit Message Regex
 
 If a regex is present, commit message must match regex.
