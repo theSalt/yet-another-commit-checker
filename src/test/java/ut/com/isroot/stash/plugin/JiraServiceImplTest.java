@@ -1,132 +1,258 @@
 package ut.com.isroot.stash.plugin;
 
 import com.atlassian.applinks.api.ApplicationLink;
-import com.atlassian.applinks.api.ApplicationLinkRequest;
-import com.atlassian.applinks.api.ApplicationLinkRequestFactory;
 import com.atlassian.applinks.api.ApplicationLinkService;
-import com.atlassian.applinks.api.application.jira.JiraApplicationType;
 import com.atlassian.sal.api.net.Request;
-import com.atlassian.sal.api.net.ResponseStatusException;
+import com.google.gson.Gson;
 import com.isroot.stash.plugin.IssueKey;
-import com.isroot.stash.plugin.JiraService;
-import com.isroot.stash.plugin.JiraServiceImpl;
-import org.assertj.core.api.Assertions;
-import org.junit.Before;
+import com.isroot.stash.plugin.errors.YaccError;
+import com.isroot.stash.plugin.jira.JiraServiceImpl;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import ut.com.isroot.stash.plugin.mock.MockApplicationLink;
+import ut.com.isroot.stash.plugin.mock.MockApplicationLinkService;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Sean Ford
  * @since 2014-01-15
  */
-@RunWith(MockitoJUnitRunner.class)
 public class JiraServiceImplTest {
-    @Mock
-    private ApplicationLinkService applicationLinkService;
-    @Mock
-    private ApplicationLink applicationLink;
-    @Mock
-    private ApplicationLinkRequestFactory applicationLinkRequestFactory;
-    @Mock
-    private ApplicationLinkRequest applicationLinkRequest;
+    @Test
+    public void testDoesIssueExist_returnsEmptyListIfJiraSearchResultsIsNonZero() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(1))
+        );
 
-    private JiraService jiraService;
-
-    @Before
-    public void setup() throws Exception {
-        when(applicationLinkService.getPrimaryApplicationLink(JiraApplicationType.class)).thenReturn(applicationLink);
-        when(applicationLink.createAuthenticatedRequestFactory()).thenReturn(applicationLinkRequestFactory);
-        when(applicationLinkRequestFactory.createRequest(Request.MethodType.POST, "/rest/api/2/search"))
-                .thenReturn(applicationLinkRequest);
-
-        jiraService = new JiraServiceImpl(applicationLinkService);
+        assertThat(jiraService.doesIssueExist(new IssueKey("TEST", "123")))
+                .isEmpty();
     }
 
     @Test
-    public void testDoesJiraApplicationLinkExist_returnsFalseIfLinkDoesNotExist() throws Exception {
-        when(applicationLinkService.getPrimaryApplicationLink(JiraApplicationType.class)).thenReturn(null);
+    public void testDoesIssueExist_returnsErrorIfJiraSearchResultsIsEmpty() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(0))
+        );
 
-        assertThat(jiraService.doesJiraApplicationLinkExist()).isFalse();
+        assertThat(jiraService.doesIssueExist(new IssueKey("TEST", "123")))
+                .containsExactly(new YaccError(YaccError.Type.ISSUE_JQL, "TEST-123: JIRA Issue does not exist"));
     }
 
     @Test
-    public void testDoesJiraApplicationLinkExist_returnsTrueIfLinkExists() throws Exception {
-        assertThat(jiraService.doesJiraApplicationLinkExist()).isTrue();
+    public void testDoesIssueExist_multipleLinks_findIssueIfOneLinkButNotTheOther() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(0)),
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(1))
+        );
+
+        assertThat(jiraService.doesIssueExist(new IssueKey("TEST", "123")))
+                .isEmpty();
     }
 
     @Test
-    public void testDoesIssueMatchJqlQuery_finalJqlQueryContainsBothIssueKeyAndUserQuery() throws Exception {
-        setupJqlTest("{\"issues\": []}");
+    public void testDoesIssueExist_multipleLinks_credentialRequiredErrorsIgnoredIfIssueIsFound() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestThrowsCredentialException(),
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(1))
+        );
 
-        jiraService.doesIssueMatchJqlQuery("project = TEST", new IssueKey("TEST", "123"));
-
-        verify(applicationLinkRequest).setEntity("{\"jql\":\"issueKey\\u003dTEST-123 and (project \\u003d TEST)\"}");
+        assertThat(jiraService.doesIssueExist(new IssueKey("TEST", "123")))
+                .isEmpty();
     }
 
     @Test
-    public void testDoesIssueMatchJqlQuery_httpRequestDetails() throws Exception {
-        setupJqlTest("{\"issues\": []}");
+    public void testDoesIssueExist_multipleLinks_authErrorsReturnIfAllLinksHaveAuthErrors() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestThrowsCredentialException().setName("jira1"),
+                MockApplicationLink.requestThrowsCredentialException().setName("jira2")
+        );
 
-        jiraService.doesIssueMatchJqlQuery("project = TEST", new IssueKey("TEST", "123"));
-
-        verify(applicationLinkService.getPrimaryApplicationLink(JiraApplicationType.class).createAuthenticatedRequestFactory())
-                .createRequest(Request.MethodType.POST, "/rest/api/2/search");
-        verify(applicationLinkRequest).setHeader("Content-Type", "application/json");
+        assertThat(jiraService.doesIssueExist(new IssueKey("TEST", "123"))).containsExactly(
+                new YaccError(YaccError.Type.OTHER, "jira1: Could not authenticate. Visit https://server/auth/uri to link your Stash account to your JIRA account"),
+                new YaccError(YaccError.Type.OTHER, "jira2: Could not authenticate. Visit https://server/auth/uri to link your Stash account to your JIRA account"));
     }
 
     @Test
-    public void testDoesIssueMatchJqlQuery_returnsFalseIfNoIssuesMatchJql() throws Exception {
-        setupJqlTest("{\"issues\": []}");
+    public void testDoesIssueExist_multipleLinks_detailedErrorsForAllLinksReturnedIfIssueNotFoundAndAtLeastOneLinkHasAnError() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestThrowsCredentialException().setName("jira1"),
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(0)).setName("jira2")
+        );
 
-        assertThat(jiraService.doesIssueMatchJqlQuery("project = TEST", new IssueKey("TEST", "123")))
-                .isFalse();
+        assertThat(jiraService.doesIssueExist(new IssueKey("TEST", "123"))).containsExactly(
+                new YaccError(YaccError.Type.OTHER, "jira1: Could not authenticate. Visit https://server/auth/uri to link your Stash account to your JIRA account"),
+                new YaccError(YaccError.Type.OTHER, "jira2: TEST-123: JIRA Issue does not exist"));
+
     }
 
     @Test
-    public void testDoesIssueMatchJqlQuery_returnsTrueIfIssuesMatchJql() throws Exception {
-        setupJqlTest("{\"issues\": [{}]}");
+    public void testDoesIssueExist_multipleLinks_issueDoesNotExistInAny() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(0)),
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(0))
+        );
 
-        assertThat(jiraService.doesIssueMatchJqlQuery("project = TEST", new IssueKey("TEST", "123")))
+        assertThat(jiraService.doesIssueExist(new IssueKey("TEST", "123")))
+                .containsExactly(new YaccError(YaccError.Type.ISSUE_JQL, "TEST-123: JIRA Issue does not exist"));
+    }
+
+    @Test
+    public void testDoesIssueMatchJqlQuery_returnsEmptyListIfIssueMatchesJqlQuery() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(1))
+        );
+
+        assertThat(jiraService.doesIssueMatchJqlQuery("query", new IssueKey("TEST", "123")))
+                .isEmpty();
+    }
+
+    @Test
+    public void testDoesIssueMatchJqlQuery_errorReturnedIfIssueDoesNotMatch() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(0))
+        );
+
+        assertThat(jiraService.doesIssueMatchJqlQuery("query", new IssueKey("TEST", "123")))
+                .containsExactly(new YaccError(YaccError.Type.ISSUE_JQL, "TEST-123: JIRA Issue does not match JQL Query: query"));
+    }
+
+    @Test
+    public void testDoesIssueMatchJqlQuery_errorReturnedIfQueryIsInvalid() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", 400).setName("jira1")
+        );
+
+        assertThat(jiraService.doesIssueMatchJqlQuery("query", new IssueKey("TEST", "123")))
+                .containsExactly(new YaccError(YaccError.Type.OTHER, "jira1: Query is not valid for JIRA instance: issueKey=TEST-123 and (query)"));
+    }
+
+    @Test
+    public void testDoesIssueMatchJqlQuery_multipleInstances_errorsIgnoredIfIssueFoundOnAtLeastOneInstance() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestThrowsCredentialException().setName("jira1"),
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", 400).setName("jira2"),
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(0)).setName("jira3"),
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(1)).setName("jira4")
+        );
+
+        assertThat(jiraService.doesIssueMatchJqlQuery("query", new IssueKey("TEST", "123")))
+                .isEmpty();
+    }
+
+    @Test
+    public void testDoesIssueMatchJqlQuery_multipleInstances_detailedErrorsReturnedIfIssueNotFoundAndErrorsOccurred() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestThrowsCredentialException().setName("jira1"),
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", 400).setName("jira2"),
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(0)).setName("jira3"),
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(0)).setName("jira4")
+        );
+
+        assertThat(jiraService.doesIssueMatchJqlQuery("query", new IssueKey("TEST", "123"))).containsExactly(
+                new YaccError(YaccError.Type.OTHER, "jira1: Could not authenticate. Visit https://server/auth/uri to link your Stash account to your JIRA account"),
+                new YaccError(YaccError.Type.OTHER, "jira2: Query is not valid for JIRA instance: issueKey=TEST-123 and (query)"),
+                new YaccError(YaccError.Type.OTHER, "jira3: TEST-123: JIRA Issue does not match JQL Query: query"),
+                new YaccError(YaccError.Type.OTHER, "jira4: TEST-123: JIRA Issue does not match JQL Query: query"));
+    }
+
+    @Test
+    public void testDoesIssueMatchJqlQuery_multipleInstances_singleErrorReturnedIfIssueNotFound() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(0)),
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(0))
+        );
+
+        assertThat(jiraService.doesIssueMatchJqlQuery("query", new IssueKey("TEST", "123"))).containsExactly(
+                new YaccError(YaccError.Type.ISSUE_JQL, "TEST-123: JIRA Issue does not match JQL Query: query"));
+    }
+
+    @Test
+    public void testDoesProjectExit_returnsTrueIfJiraReturnsNoSearchResults() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(0)));
+
+        assertThat(jiraService.doesProjectExist("TEST"))
                 .isTrue();
     }
 
     @Test
-    public void testIsJqlIssueValid_returnsTrueIfValid() throws Exception {
-        assertThat(jiraService.isJqlQueryValid("assignee is not empty")).isTrue();
+    public void testDoesProjectExit_returnsTrueIfJiraReturnsSearchResults() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(1)));
+
+        assertThat(jiraService.doesProjectExist("TEST"))
+                .isTrue();
     }
 
     @Test
-    public void testIsJqlQueryValid_returnsFalseIfNotValid() throws Exception {
-        ResponseStatusException ex = mock(ResponseStatusException.class, RETURNS_DEEP_STUBS);
-        when(ex.getResponse().getStatusCode()).thenReturn(400);
-        when(applicationLinkRequest.execute()).thenThrow(ex);
+    public void testDoesProjectExit_returnsFalseIfJiraReturns400() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", 400));
 
-        assertThat(jiraService.isJqlQueryValid("invalid jql query@#%$")).isFalse();
+        assertThat(jiraService.doesProjectExist("TEST"))
+                .isFalse();
     }
 
     @Test
-    public void testIsJqlQueryValid_unknownExceptionsAreRethrown() throws Exception {
-        ResponseStatusException ex = mock(ResponseStatusException.class, RETURNS_DEEP_STUBS);
-        when(ex.getResponse().getStatusCode()).thenReturn(500);
-        when(applicationLinkRequest.execute()).thenThrow(ex);
+    public void testCheckJqlQuery_returnsEmptyListIfQueryIsValid() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(0)));
 
-        try {
-            jiraService.isJqlQueryValid("jql query");
-            Assertions.failBecauseExceptionWasNotThrown(ResponseStatusException.class);
-        } catch(ResponseStatusException expected) {
-            assertThat(expected).isSameAs(ex);
+        assertThat(jiraService.checkJqlQuery("query"))
+                .isEmpty();
+    }
+
+    @Test
+    public void testCheckJqlQuery_returnsErrorIfQueryIsNotValid() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", 400));
+
+        assertThat(jiraService.checkJqlQuery("query"))
+                .containsExactly("JQL Query is invalid.");
+    }
+
+    @Test
+    public void testCheckJqlQuery_multipleInstances_returnsEmptyListIfQueryIsValidOnAtLeastOneInstance() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", 400),
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(0)));
+
+        assertThat(jiraService.checkJqlQuery("query"))
+                .isEmpty();
+    }
+
+    @Test
+    public void testCheckJqlQuery_multipleInstances_detailedErrorsIfQueryIsNotValidOnAtLeastOneInstance() {
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", 400).setName("jira1"),
+                MockApplicationLink.requestThrowsCredentialException().setName("jira2"));
+
+        assertThat(jiraService.checkJqlQuery("query"))
+                .containsExactly("jira2: Could not authenticate. Visit https://server/auth/uri to link your Stash account to your JIRA account",
+                        "jira1: JQL Query is invalid.");
+    }
+
+
+    private String jiraResponse(int searchResults) {
+        List<String> results = new ArrayList<>();
+
+        for (int i = 0; i < searchResults; i++) {
+            results.add("");
         }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("issues", results);
+
+        return new Gson().toJson(response);
     }
 
-    private void setupJqlTest(String jsonResponse) throws Exception {
-        when(applicationLinkRequest.execute()).thenReturn(jsonResponse);
+    private JiraServiceImpl setupTest(ApplicationLink... links) {
+        ApplicationLinkService linkService = new MockApplicationLinkService(links);
+        return new JiraServiceImpl(linkService);
     }
 }
