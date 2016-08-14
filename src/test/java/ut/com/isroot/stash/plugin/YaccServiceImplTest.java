@@ -151,7 +151,37 @@ public class YaccServiceImplTest {
         List<YaccError> errors = yaccService.checkRefChange(null, settings, mockRefChange());
         assertThat(errors).isEmpty();
     }
-    
+    @Test
+    public void testCheckRefChange_requireMatchingAuthorEmailRegex_rejectOnMismatch() throws Exception {
+        when(settings.getBoolean("requireMatchingAuthorEmail", false)).thenReturn(false);
+        when(settings.getString("committerEmailRegex")).thenReturn("correct@email.com");
+        when(stashUser.getType()).thenReturn(UserType.NORMAL);
+        when(stashUser.getEmailAddress()).thenReturn("wrong@email.com");
+
+        YaccCommit commit = mockCommit();
+        when(commit.getCommitter().getEmailAddress()).thenReturn("wrong@email.com");
+        when(commitsService.getNewCommits(any(Repository.class), any(RefChange.class))).thenReturn(Sets.newHashSet(commit));
+
+        List<YaccError> errors = yaccService.checkRefChange(null, settings, mockRefChange());
+        assertThat(errors).contains(new YaccError(YaccError.Type.COMMITTER_EMAIL_REGEX,
+                    String.format("deadbeef: committer email regex '%s' does not match user email '%s'",
+                            settings.getString("committerEmailRegex"),
+                    commit.getCommitter().getEmailAddress())));
+    }
+    @Test
+    public void testCheckRefChange_requireMatchingAuthorEmailRegex_allowOnMatch() throws Exception {
+        when(settings.getBoolean("requireMatchingAuthorEmail", false)).thenReturn(false);
+        when(settings.getString("committerEmailRegex")).thenReturn(".*\\@email.com");
+        when(stashUser.getType()).thenReturn(UserType.NORMAL);
+        when(stashUser.getEmailAddress()).thenReturn("correct@email.com");
+
+        YaccCommit commit = mockCommit();
+        when(commit.getCommitter().getEmailAddress()).thenReturn("wrong@email.com");
+        when(commitsService.getNewCommits(any(Repository.class), any(RefChange.class))).thenReturn(Sets.newHashSet(commit));
+
+        List<YaccError> errors = yaccService.checkRefChange(null, settings, mockRefChange());
+        assertThat(errors).isEmpty();
+    }
     @Test
     public void testCheckRefChange_serviceUser_skipped() {
         when(settings.getBoolean("requireMatchingAuthorName", false)).thenReturn(true);

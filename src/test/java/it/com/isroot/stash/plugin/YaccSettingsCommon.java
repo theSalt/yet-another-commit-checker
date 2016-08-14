@@ -25,6 +25,9 @@ abstract class YaccSettingsCommon extends BitbucketPage {
     @ElementBy(id = "commitMessageRegex")
     private PageElement commitMessageRegex;
 
+    @ElementBy(id = "committerEmailRegex")
+    private PageElement committerEmailRegex;
+
     @ElementBy(id = "branchNameRegex")
     private PageElement branchNameRegex;
 
@@ -33,6 +36,9 @@ abstract class YaccSettingsCommon extends BitbucketPage {
 
     @ElementBy(id = "errorMessage.COMMITTER_EMAIL")
     private PageElement errorMessageCommitterEmail;
+
+    @ElementBy(id = "errorMessage.COMMITTER_EMAIL_REGEX")
+    private PageElement errorMessageCommitterEmailRegex;
 
     @ElementBy(id = "errorMessage.COMMITTER_NAME")
     private PageElement errorMessageCommitterName;
@@ -88,6 +94,16 @@ abstract class YaccSettingsCommon extends BitbucketPage {
         assertThat(commitMessageRegex.getValue()).isEqualTo(regex);
         return this;
     }
+    public YaccSettingsCommon setCommitterEmailRegex(String regex) {
+        committerEmailRegex.clear();
+        committerEmailRegex.type(regex);
+        return this;
+    }
+
+    public YaccSettingsCommon verifyCommitterEmailRegex(String regex) {
+        assertThat(committerEmailRegex.getValue()).isEqualTo(regex);
+        return this;
+    }
 
     public YaccSettingsCommon setBranchNameRegex(String regex) {
         branchNameRegex.clear();
@@ -118,11 +134,21 @@ abstract class YaccSettingsCommon extends BitbucketPage {
         return this;
     }
 
+
     public YaccSettingsCommon verifyErrorMessageCommitterEmail(String value) {
         assertThat(errorMessageCommitterEmail.getValue()).isEqualTo(value);
         return this;
     }
 
+    public YaccSettingsCommon setErrorMessageCommitterEmailRegex(String value) {
+        errorMessageCommitterEmailRegex.clear();
+        errorMessageCommitterEmailRegex.type(value);
+        return this;
+    }
+    public YaccSettingsCommon verifyErrorMessageCommitterEmailRegex(String value) {
+        assertThat(errorMessageCommitterEmailRegex.getValue()).isEqualTo(value);
+        return this;
+    }
     public YaccSettingsCommon setErrorMessageCommitterName(String value) {
         errorMessageCommitterName.clear();
         errorMessageCommitterName.type(value);
@@ -235,7 +261,9 @@ abstract class YaccSettingsCommon extends BitbucketPage {
         setBranchNameRegex("");
         setExcludeByRegex("");
         setCommitMessageRegex("");
+        setCommitterEmailRegex("");
         setErrorMessageCommitterEmail("");
+        setErrorMessageCommitterEmailRegex("");
         setErrorMessageBranchName("");
         setErrorMessageCommitRegex("");
         setErrorMessageCommitterName("");

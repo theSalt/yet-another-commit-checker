@@ -8,6 +8,7 @@ public class YaccError {
     public enum Type {
         COMMITTER_NAME,
         COMMITTER_EMAIL,
+        COMMITTER_EMAIL_REGEX,
         COMMIT_REGEX,
         ISSUE_JQL,
         BRANCH_NAME,
