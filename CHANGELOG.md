@@ -2,6 +2,7 @@
 
 ### 1.12 (UNRELEASED)
 
+* Feature: Support multiple JIRA instances. Thanks [@bbaetz](https://github.com/bbaetz)!
 * Feature: Check committer email against regex (ex: validate email domain). Thanks [@mludy](https://github.com/mludy)!
 
 ### 1.11
