@@ -2,6 +2,7 @@ package com.isroot.stash.plugin;
 
 import com.atlassian.bitbucket.auth.AuthenticationContext;
 import com.atlassian.bitbucket.repository.RefChange;
+import com.atlassian.bitbucket.repository.RefChangeType;
 import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.user.ApplicationUser;
@@ -46,7 +47,9 @@ public class YaccServiceImpl implements YaccService {
 
         List<YaccError> errors = Lists.newArrayList();
 
-        errors.addAll(new BranchNameCheck(settings, refChange.getRefId()).check());
+        if (refChange.getType() == RefChangeType.ADD) {
+            errors.addAll(new BranchNameCheck(settings, refChange.getRefId()).check());
+        }
 
         Set<YaccCommit> commits = commitsService.getNewCommits(repository, refChange);
 

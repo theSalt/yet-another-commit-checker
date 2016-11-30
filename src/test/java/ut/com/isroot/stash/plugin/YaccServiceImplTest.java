@@ -453,10 +453,10 @@ public class YaccServiceImplTest {
     }
 
     @Test
-    public void testCheckRefChange_branchNameCheckApplied() {
+    public void testCheckRefAdd_branchNameCheckApplied() {
         when(settings.getString("branchNameRegex")).thenReturn("foo");
 
-        RefChange refChange = mockRefChange();
+        RefChange refChange = mockRefAdd();
 
         List<YaccError> errors = yaccService.checkRefChange(null, settings, refChange);
 
@@ -466,6 +466,17 @@ public class YaccServiceImplTest {
 
     }
 
+    @Test
+    public void testCheckRefChange_branchNameCheckApplied() {
+        when(settings.getString("branchNameRegex")).thenReturn("foo");
+
+        RefChange refChange = mockRefChange();
+
+        List<YaccError> errors = yaccService.checkRefChange(null, settings, refChange);
+
+        assertThat(errors).isEmpty();
+    }
+
     private YaccCommit mockCommit() {
         YaccCommit commit = mock(YaccCommit.class, RETURNS_DEEP_STUBS);
         when(commit.getCommitter().getName()).thenReturn("John Smith");
@@ -473,6 +484,15 @@ public class YaccServiceImplTest {
         when(commit.getId()).thenReturn("deadbeef");
         when(commit.getParentCount()).thenReturn(1);
         return commit;
+    }
+
+    private RefChange mockRefAdd() {
+        RefChange refChange = mock(RefChange.class);
+        when(refChange.getFromHash()).thenReturn("0000000000000000000000000000000000000000");
+        when(refChange.getToHash()).thenReturn("35d938b060bb361503e021f228e43351f1a71551");
+        when(refChange.getRefId()).thenReturn("refs/heads/master");
+        when(refChange.getType()).thenReturn(RefChangeType.ADD);
+        return refChange;
     }
 
     private RefChange mockRefChange() {
