@@ -115,11 +115,12 @@ JQL queries.
 
 ####Branch Name Regex
 
-If present, only branches with names that match this regex will be allowed to be created. This
-affects both new branches being pushed and branches created within the Bitbucket Server UI.
+If present, only branches with names that match this regex will be allowed to be created. This also
+affects branches created within the Bitbucket Server UI. This only affects _new_ branches, existing
+branches that don't match this regex will still be allowed.
 
-For example, `master|(?:(?:bugfix|hotfix|feature)/[A-Z]+-\d+-.+)` would enforce that pushes
-should be done to branches that follow the Bitbucket Server Branching Model naming convention.
+For example, `master|(?:(?:bugfix|hotfix|feature)/[A-Z]+-\d+-.+)` would enforce that branch names
+follow the Bitbucket Server Branching Model naming convention.
 
 ####Exclude Merge Commits
 
