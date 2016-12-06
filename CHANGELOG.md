@@ -4,6 +4,8 @@
 
 * Feature: Support multiple JIRA instances. Thanks [@bbaetz](https://github.com/bbaetz)!
 * Feature: Check committer email against regex (ex: validate email domain). Thanks [@mludy](https://github.com/mludy)!
+* Feature: Branch Name Regex tweaked to only apply to _new_ branches. Existing branches will still be allowed.
+Thanks [@shanealmeida](https://github.com/shanealmeida)!
 
 ### 1.11
 
