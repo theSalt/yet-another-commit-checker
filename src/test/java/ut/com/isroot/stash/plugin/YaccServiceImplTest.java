@@ -453,7 +453,7 @@ public class YaccServiceImplTest {
     }
 
     @Test
-    public void testCheckRefAdd_branchNameCheckApplied() {
+    public void testCheckRefChange_branchNameRegex_branchRejectedIfDoesNotMatchRegex() {
         when(settings.getString("branchNameRegex")).thenReturn("foo");
 
         RefChange refChange = mockRefAdd();
@@ -463,11 +463,10 @@ public class YaccServiceImplTest {
         assertThat(errors)
                 .containsOnly(new YaccError(YaccError.Type.BRANCH_NAME,
                         "Invalid branch name. 'master' does not match regex 'foo'"));
-
     }
 
     @Test
-    public void testCheckRefChange_branchNameCheckApplied() {
+    public void testCheckRefChange_branchNameRegex_branchAllowedIfItAlreadyExists() {
         when(settings.getString("branchNameRegex")).thenReturn("foo");
 
         RefChange refChange = mockRefChange();
