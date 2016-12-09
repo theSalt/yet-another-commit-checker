@@ -176,6 +176,14 @@
 		{param errorTexts: $errors ? $errors['excludeByRegex'] : null /}
    {/call}
 
+   {call aui.form.textField}
+		{param id: 'excludeBranchRegex' /}
+		{param labelContent: 'Exclude Brnach Regex' /}
+		{param value: $config['excludeBranchRegex'] /}
+		{param descriptionText: 'Exclude commits if branch name matches this regex.' /}
+		{param errorTexts: $errors ? $errors['excludeBranchRegex'] : null /}
+   {/call}
+
    {call aui.form.checkboxField}
     {param legendContent: 'Exclude Service User Commits' /}
       {param fields: [[

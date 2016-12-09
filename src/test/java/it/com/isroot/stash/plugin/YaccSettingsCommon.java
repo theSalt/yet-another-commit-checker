@@ -1,12 +1,12 @@
 package it.com.isroot.stash.plugin;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.atlassian.pageobjects.elements.ElementBy;
 import com.atlassian.pageobjects.elements.PageElement;
 import com.atlassian.pageobjects.elements.query.Poller;
 import com.atlassian.webdriver.bitbucket.page.BitbucketPage;
 import com.atlassian.webdriver.bitbucket.util.ElementUtils;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Sean Ford
@@ -60,6 +60,9 @@ abstract class YaccSettingsCommon extends BitbucketPage {
 
     @ElementBy(id = "excludeByRegex")
     private PageElement excludeByRegex;
+
+    @ElementBy(id = "excludeBranchRegex")
+    private PageElement excludeBranchRegex;
 
     @ElementBy(id = "excludeServiceUserCommits")
     private PageElement excludeServiceUserCommits;
@@ -235,6 +238,17 @@ abstract class YaccSettingsCommon extends BitbucketPage {
         return this;
     }
 
+    public YaccSettingsCommon setExcludeBranchRegex(String value) {
+        excludeBranchRegex.clear();
+        excludeBranchRegex.type(value);
+        return this;
+    }
+
+    public YaccSettingsCommon verifyExcludeBranchRegex(String value) {
+        assertThat(excludeBranchRegex.getValue()).isEqualTo(value);
+        return this;
+    }
+
     public Iterable<String> getFieldIdsWithErrors() {
         return ElementUtils.getFieldsWithErrors(form);
     }
@@ -260,6 +274,7 @@ abstract class YaccSettingsCommon extends BitbucketPage {
 
         setBranchNameRegex("");
         setExcludeByRegex("");
+        setExcludeBranchRegex("");
         setCommitMessageRegex("");
         setCommitterEmailRegex("");
         setErrorMessageCommitterEmail("");

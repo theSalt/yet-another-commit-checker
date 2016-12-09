@@ -1,15 +1,16 @@
 package it.com.isroot.stash.plugin;
 
-import com.atlassian.pageobjects.TestedProductFactory;
-import com.atlassian.webdriver.bitbucket.BitbucketTestedProduct;
-import com.atlassian.webdriver.bitbucket.page.BitbucketLoginPage;
-import com.atlassian.webdriver.testing.rule.WebDriverScreenshotRule;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.atlassian.pageobjects.TestedProductFactory;
+import com.atlassian.webdriver.bitbucket.BitbucketTestedProduct;
+import com.atlassian.webdriver.bitbucket.page.BitbucketLoginPage;
+import com.atlassian.webdriver.testing.rule.WebDriverScreenshotRule;
 
 /**
  * Integration test to verify that both the YACC global and repo settings page are in sync and both working.
@@ -89,18 +90,20 @@ public class SettingsTest {
                 .verifyErrorMessageFooter("")
                 .verifyExcludeMergeCommits(false)
                 .verifyExcludeByRegex("")
+                .verifyExcludeBranchRegex("")
                 .verifyExcludeMergeCommits(false);
     }
 
     private void setInvalidValues(YaccSettingsCommon yaccSettingsCommon) {
         yaccSettingsCommon.setCommitMessageRegex("(invalid regex")
                 .setExcludeByRegex("(invalid regex")
+                .setExcludeBranchRegex("(invalid regex")
                 .setCommitterEmailRegex("(invalid regex");
     }
 
     private void verifyValidationErrors(YaccSettingsCommon yaccSettingsCommon) {
         assertThat(yaccSettingsCommon.getFieldIdsWithErrors())
-                .containsOnly("commitMessageRegex", "excludeByRegex", "committerEmailRegex");
+                .containsOnly("commitMessageRegex", "excludeByRegex", "excludeBranchRegex", "committerEmailRegex");
     }
 
     private void setValues(YaccSettingsCommon yaccSettingsCommon) {
@@ -118,6 +121,7 @@ public class SettingsTest {
                 .setErrorMessageFooter("footer")
                 .clickExcludeMergeCommits()
                 .setExcludeByRegex(".*")
+                .setExcludeBranchRegex(".*")
                 .clickExcludeServiceUserCommits();
     }
 
@@ -136,6 +140,7 @@ public class SettingsTest {
                 .verifyErrorMessageFooter("footer")
                 .verifyExcludeMergeCommits(true)
                 .verifyExcludeByRegex(".*")
+                .verifyExcludeBranchRegex(".*")
                 .verifyExcludeMergeCommits(true);
     }
 }

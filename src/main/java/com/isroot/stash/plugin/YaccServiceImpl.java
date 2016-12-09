@@ -1,5 +1,17 @@
 package com.isroot.stash.plugin;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.annotation.Nonnull;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.atlassian.bitbucket.auth.AuthenticationContext;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.RefChangeType;
@@ -11,16 +23,6 @@ import com.atlassian.stash.scm.git.GitRefPattern;
 import com.google.common.collect.Lists;
 import com.isroot.stash.plugin.checks.BranchNameCheck;
 import com.isroot.stash.plugin.errors.YaccError;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nonnull;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static com.google.common.base.Strings.isNullOrEmpty;
 
 /**
  * @author Sean Ford
@@ -52,9 +54,10 @@ public class YaccServiceImpl implements YaccService {
         }
 
         Set<YaccCommit> commits = commitsService.getNewCommits(repository, refChange);
-
+        String branchName = refChange.getRefId().replace(GitRefPattern.HEADS.getPath(), "");
+        
         for (YaccCommit commit : commits) {
-            for(YaccError e : checkCommit(settings, commit, !isTag)) {
+            for(YaccError e : checkCommit(settings, commit, !isTag, branchName)) {
                 errors.add(e.prependText(commit.getId()));
             }
         }
@@ -62,7 +65,7 @@ public class YaccServiceImpl implements YaccService {
         return errors;
     }
 
-    private List<YaccError> checkCommit(Settings settings, YaccCommit commit, boolean checkMessages) {
+    private List<YaccError> checkCommit(Settings settings, YaccCommit commit, boolean checkMessages, String branchName) {
         log.debug("checking commit id={} name={} email={} message={}", commit.getId(),
                 commit.getCommitter().getName(), commit.getCommitter().getEmailAddress(),
                 commit.getMessage());
@@ -84,7 +87,7 @@ public class YaccServiceImpl implements YaccService {
             }
         }
 
-        if(checkMessages && !isCommitExcluded(settings, commit)) {
+        if(checkMessages && !isCommitExcluded(settings, commit) && !isBranchExcluded(settings, branchName)) {
             errors.addAll(checkCommitMessageRegex(settings, commit));
 
             // Checking JIRA issues might be dependent on the commit message regex, so only proceed if there are no errors.
@@ -116,6 +119,21 @@ public class YaccServiceImpl implements YaccService {
         if(excludeRegex != null && !excludeRegex.isEmpty()) {
             Pattern pattern = Pattern.compile(excludeRegex);
             Matcher matcher = pattern.matcher(commit.getMessage());
+            if(matcher.find()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    
+    private boolean isBranchExcluded(Settings settings, String branchName) {
+        // Exclude by Regex setting
+        String excludeBranchRegex = settings.getString("excludeBranchRegex");
+
+        if(excludeBranchRegex != null && !excludeBranchRegex.isEmpty()) {
+            Pattern pattern = Pattern.compile(excludeBranchRegex);
+            Matcher matcher = pattern.matcher(branchName);
             if(matcher.find()) {
                 return true;
             }
