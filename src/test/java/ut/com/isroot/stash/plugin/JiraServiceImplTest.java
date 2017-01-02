@@ -35,8 +35,22 @@ public class JiraServiceImplTest {
 
     @Test
     public void testDoesIssueExist_returnsErrorIfJiraSearchResultsIsEmpty() {
+        // JIRA API returns a 200 with zero results if project key does not exist
+
         JiraServiceImpl jiraService = setupTest(
                 MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(0))
+        );
+
+        assertThat(jiraService.doesIssueExist(new IssueKey("TEST", "123")))
+                .containsExactly(new YaccError(YaccError.Type.ISSUE_JQL, "TEST-123: JIRA Issue does not exist"));
+    }
+
+    @Test
+    public void testDoesIssueExist_returnsErrorIfJiraReturns400() {
+        // JIRA API returns a 400 error if project key exists but issue number does not
+
+        JiraServiceImpl jiraService = setupTest(
+                MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", 400)
         );
 
         assertThat(jiraService.doesIssueExist(new IssueKey("TEST", "123")))

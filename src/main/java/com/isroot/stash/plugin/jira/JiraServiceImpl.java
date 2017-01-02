@@ -73,7 +73,13 @@ public class JiraServiceImpl implements JiraService {
         List<YaccError> errors = new ArrayList<>();
 
         try {
-            if (!execute("issueKey=" + issueKey.getFullyQualifiedIssueKey(), SUCCESS_ON.NON_ZERO_RESULT)) {
+            // JIRA response to this query can be different depending on how the issue key is
+            // invalid.
+            // 1) If project key does not exist, an 200 with zero result size is returned
+            // 2) If project key exists but issue number does not exist, a 400 response due to
+            //    invalid JQL is returned
+            if (!execute("issueKey=" + issueKey.getFullyQualifiedIssueKey(),
+                    SUCCESS_ON.NON_ZERO_RESULT, false)) {
                 errors.add(new YaccError(YaccError.Type.ISSUE_JQL, "%s: JIRA Issue does not exist",
                         issueKey.getFullyQualifiedIssueKey()));
             }
@@ -92,7 +98,7 @@ public class JiraServiceImpl implements JiraService {
         checkNotNull(projectKey, "projectKey is null");
 
         try {
-            return execute("project = " + projectKey, SUCCESS_ON.STATUS_200);
+            return execute("project = " + projectKey, SUCCESS_ON.STATUS_200, false);
         } catch (JiraLookupsException e) {
 
             // Assume project exists if there is any sort of error. If there
@@ -114,7 +120,7 @@ public class JiraServiceImpl implements JiraService {
                 issueKey.getFullyQualifiedIssueKey(), jqlQuery);
 
         try {
-            if (!execute(jqlQueryWithIssueExpression, SUCCESS_ON.NON_ZERO_RESULT)) {
+            if (!execute(jqlQueryWithIssueExpression, SUCCESS_ON.NON_ZERO_RESULT, true)) {
                 errors.add(new YaccError(YaccError.Type.ISSUE_JQL, "%s: JIRA Issue does not match JQL Query: %s",
                         issueKey.getFullyQualifiedIssueKey(), jqlQuery));
             }
@@ -134,7 +140,7 @@ public class JiraServiceImpl implements JiraService {
 
         try {
             // This will throw an exception if the jql query is invalid.
-            if(execute(jqlQuery, SUCCESS_ON.STATUS_200)) {
+            if(execute(jqlQuery, SUCCESS_ON.STATUS_200, false)) {
                 return ImmutableList.<String>of();
             } else {
                 return ImmutableList.of("JQL Query is invalid.");
@@ -149,9 +155,8 @@ public class JiraServiceImpl implements JiraService {
         }
     }
 
-    private enum SUCCESS_ON {STATUS_200, NON_ZERO_RESULT}
-
-    private boolean execute(String jqlQuery, SUCCESS_ON successOn) throws JiraLookupsException {
+    private boolean execute(String jqlQuery, SUCCESS_ON successOn, boolean trackInvalidJqlAsError)
+            throws JiraLookupsException {
         checkNotNull(jqlQuery, "jqlQuery is null");
 
         JiraLookupsException ex = new JiraLookupsException();
@@ -205,10 +210,7 @@ public class JiraServiceImpl implements JiraService {
                     }
 
                     if (statusException.getResponse().getStatusCode() == 400) {
-                        // Only treat 400 as an error if we aren't explicitly looking for 200.
-                        // For project key lookups, JIRA returns 400 if project does not exist,
-                        // which is fine and we don't want it be a hard error.
-                        if(successOn != SUCCESS_ON.STATUS_200) {
+                        if(trackInvalidJqlAsError) {
                             ex.addError(link, "Query is not valid for JIRA instance: " + jqlQuery);
                         }
 
@@ -228,4 +230,6 @@ public class JiraServiceImpl implements JiraService {
 
         return false;
     }
+
+    private enum SUCCESS_ON {STATUS_200, NON_ZERO_RESULT}
 }
