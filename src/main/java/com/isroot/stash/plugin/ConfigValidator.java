@@ -1,18 +1,20 @@
 package com.isroot.stash.plugin;
 
-import com.atlassian.bitbucket.repository.Repository;
-import com.atlassian.bitbucket.setting.RepositorySettingsValidator;
-import com.atlassian.bitbucket.setting.Settings;
-import com.atlassian.bitbucket.setting.SettingsValidationErrors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.google.common.base.Strings.isNullOrEmpty;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
+import javax.annotation.Nonnull;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.atlassian.bitbucket.repository.Repository;
+import com.atlassian.bitbucket.setting.RepositorySettingsValidator;
+import com.atlassian.bitbucket.setting.Settings;
+import com.atlassian.bitbucket.setting.SettingsValidationErrors;
 
 /**
  * @author sdford
@@ -33,6 +35,7 @@ public class ConfigValidator implements RepositorySettingsValidator {
         validationRegex(settings, errors, "commitMessageRegex");
         validationRegex(settings, errors, "committerEmailRegex");
         validationRegex(settings, errors, "excludeByRegex");
+        validationRegex(settings, errors, "excludeBranchRegex");
         validationRegex(settings, errors, "branchNameRegex");
 
         if (settings.getBoolean("requireJiraIssue", false)) {

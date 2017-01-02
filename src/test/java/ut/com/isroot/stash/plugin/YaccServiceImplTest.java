@@ -1,5 +1,22 @@
 package ut.com.isroot.stash.plugin;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+import java.util.Set;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
 import com.atlassian.applinks.api.CredentialsRequiredException;
 import com.atlassian.bitbucket.auth.AuthenticationContext;
 import com.atlassian.bitbucket.repository.RefChange;
@@ -18,22 +35,6 @@ import com.isroot.stash.plugin.YaccCommit;
 import com.isroot.stash.plugin.YaccService;
 import com.isroot.stash.plugin.YaccServiceImpl;
 import com.isroot.stash.plugin.errors.YaccError;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import java.util.List;
-import java.util.Set;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Sean Ford
@@ -368,6 +369,46 @@ public class YaccServiceImplTest {
 
         List<YaccError> errors = yaccService.checkRefChange(null, settings, mockRefChange());
         assertThat(errors).isNotEmpty();
+    }
+
+    @Test
+    public void testCheckRefChange_excludeBranchRegex_commitNotAllowedIfNoJiraIssuesWithAValidProjectAreFoundAndBranchIsNotExcluded() {
+        when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
+        when(settings.getBoolean("ignoreUnknownIssueProjectKeys", false)).thenReturn(true);
+        when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
+        when(jiraService.doesProjectExist("UTF")).thenReturn(false);
+        when(settings.getString("excludeBranchRegex")).thenReturn("skipcheck");
+        
+        RefChange refChange = mockRefChange();
+        when(refChange.getRefId()).thenReturn("refs/heads/NoSkipcheck");
+
+        YaccCommit commit = mockCommit();
+        when(commit.getMessage()).thenReturn("this commit message has no jira issues. UTF-8 is not a valid issue because it has an invalid project key.");
+        when(commitsService.getNewCommits(any(Repository.class), any(RefChange.class))).thenReturn(Sets.newHashSet(commit));
+
+        List<YaccError> errors = yaccService.checkRefChange(null, settings, refChange);
+        assertThat(errors).containsOnly(new YaccError("deadbeef: No JIRA Issue found in commit message."));
+        verify(settings).getString("excludeBranchRegex");
+    }
+
+    @Test
+    public void testCheckRefChange_excludeBranchRegex_commitAllowedIfNoJiraIssuesWithAValidProjectAreFoundAndBranchIsExcluded() {
+        when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
+        when(settings.getBoolean("ignoreUnknownIssueProjectKeys", false)).thenReturn(true);
+        when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
+        when(jiraService.doesProjectExist("UTF")).thenReturn(false);
+        when(settings.getString("excludeBranchRegex")).thenReturn("skipcheck");
+
+        RefChange refChange = mockRefChange();
+        when(refChange.getRefId()).thenReturn("refs/heads/skipcheck");
+
+        YaccCommit commit = mockCommit();
+        when(commit.getMessage()).thenReturn("this commit message has no jira issues. UTF-8 is not a valid issue because it has an invalid project key.");
+        when(commitsService.getNewCommits(any(Repository.class), any(RefChange.class))).thenReturn(Sets.newHashSet(commit));
+
+        List<YaccError> errors = yaccService.checkRefChange(null, settings, refChange);
+        assertThat(errors).isEmpty();
+        verify(settings).getString("excludeBranchRegex");
     }
 
     @Test

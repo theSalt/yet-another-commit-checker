@@ -1,22 +1,23 @@
 package ut.com.isroot.stash.plugin;
 
-import com.atlassian.bitbucket.repository.Repository;
-import com.atlassian.bitbucket.setting.Settings;
-import com.atlassian.bitbucket.setting.SettingsValidationErrors;
-import com.isroot.stash.plugin.ConfigValidator;
-import com.isroot.stash.plugin.JiraService;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
+import com.atlassian.bitbucket.repository.Repository;
+import com.atlassian.bitbucket.setting.Settings;
+import com.atlassian.bitbucket.setting.SettingsValidationErrors;
+import com.isroot.stash.plugin.ConfigValidator;
+import com.isroot.stash.plugin.JiraService;
 
 /**
  * @author Sean Ford
@@ -102,6 +103,37 @@ public class ConfigValidatorTest {
 
         verify(settings).getString("excludeByRegex");
         verify(settingsValidationErrors).addFieldError("excludeByRegex", "Invalid Regex: Unclosed group near index 2\n" +
+                "^(\n" +
+                "  ^");
+    }
+
+    @Test
+    public void testValidate_excludeBranchRegex_emptyStringAllowed() {
+        when(settings.getString("excludeBranchRegex")).thenReturn("");
+
+        configValidator.validate(settings, settingsValidationErrors, repository);
+
+        verify(settings).getString("excludeBranchRegex");
+        verifyZeroInteractions(settingsValidationErrors);
+    }
+
+    @Test
+    public void testValidate_excludeBranchRegex_goodRegex() {
+        when(settings.getString("excludeBranchRegex")).thenReturn("^Revert \"|#skipchecks");
+
+        configValidator.validate(settings, settingsValidationErrors, repository);
+
+        verify(settings).getString("excludeBranchRegex");
+        verifyZeroInteractions(settingsValidationErrors);
+    }
+    @Test
+    public void testValidate_excludeBranchRegex_badRegex() {
+        when(settings.getString("excludeBranchRegex")).thenReturn("^(");
+
+        configValidator.validate(settings, settingsValidationErrors, repository);
+
+        verify(settings).getString("excludeBranchRegex");
+        verify(settingsValidationErrors).addFieldError("excludeBranchRegex", "Invalid Regex: Unclosed group near index 2\n" +
                 "^(\n" +
                 "  ^");
     }
