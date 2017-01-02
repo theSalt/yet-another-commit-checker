@@ -1,23 +1,5 @@
 package ut.com.isroot.stash.plugin;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-
-import java.util.List;
-import java.util.Set;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import com.atlassian.applinks.api.CredentialsRequiredException;
 import com.atlassian.bitbucket.auth.AuthenticationContext;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.RefChangeType;
@@ -25,7 +7,6 @@ import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.user.ApplicationUser;
 import com.atlassian.bitbucket.user.UserType;
-import com.atlassian.sal.api.net.ResponseException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.isroot.stash.plugin.CommitsService;
@@ -35,6 +16,22 @@ import com.isroot.stash.plugin.YaccCommit;
 import com.isroot.stash.plugin.YaccService;
 import com.isroot.stash.plugin.YaccServiceImpl;
 import com.isroot.stash.plugin.errors.YaccError;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.util.List;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Sean Ford
@@ -44,8 +41,6 @@ public class YaccServiceImplTest {
     @Mock private AuthenticationContext stashAuthenticationContext;
     @Mock private CommitsService commitsService;
     @Mock private JiraService jiraService;
-    @Mock private ResponseException responseException;
-    @Mock private CredentialsRequiredException credRequired;
     @Mock private Settings settings;
     @Mock private ApplicationUser stashUser;
 
@@ -372,18 +367,16 @@ public class YaccServiceImplTest {
     }
 
     @Test
-    public void testCheckRefChange_excludeBranchRegex_commitNotAllowedIfNoJiraIssuesWithAValidProjectAreFoundAndBranchIsNotExcluded() {
+    public void testCheckRefChange_excludeBranchRegex_commitNotAllowedIfNoJiraIssuesAndBranchIsNotExcluded() {
         when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
-        when(settings.getBoolean("ignoreUnknownIssueProjectKeys", false)).thenReturn(true);
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
-        when(jiraService.doesProjectExist("UTF")).thenReturn(false);
         when(settings.getString("excludeBranchRegex")).thenReturn("skipcheck");
         
         RefChange refChange = mockRefChange();
         when(refChange.getRefId()).thenReturn("refs/heads/NoSkipcheck");
 
         YaccCommit commit = mockCommit();
-        when(commit.getMessage()).thenReturn("this commit message has no jira issues. UTF-8 is not a valid issue because it has an invalid project key.");
+        when(commit.getMessage()).thenReturn("this commit message has no jira issues.");
         when(commitsService.getNewCommits(any(Repository.class), any(RefChange.class))).thenReturn(Sets.newHashSet(commit));
 
         List<YaccError> errors = yaccService.checkRefChange(null, settings, refChange);
@@ -392,18 +385,33 @@ public class YaccServiceImplTest {
     }
 
     @Test
-    public void testCheckRefChange_excludeBranchRegex_commitAllowedIfNoJiraIssuesWithAValidProjectAreFoundAndBranchIsExcluded() {
+    public void testCheckRefChange_excludeBranchRegex_regexMustMatchFullBranchName() {
+        when(settings.getString("commitMessageRegex")).thenReturn("[A-Z0-9\\-]+: .*");
+        when(settings.getString("excludeBranchRegex")).thenReturn("skipcheck");
+
+        RefChange refChange = mockRefChange();
+        when(refChange.getRefId()).thenReturn("refs/heads/some-branch-skipcheck");
+
+        YaccCommit commit = mockCommit();
+        when(commit.getMessage()).thenReturn("this commit message has no jira issues.");
+        when(commitsService.getNewCommits(any(Repository.class), any(RefChange.class))).thenReturn(Sets.newHashSet(commit));
+
+        List<YaccError> errors = yaccService.checkRefChange(null, settings, refChange);
+        assertThat(errors).containsOnly(new YaccError(YaccError.Type.COMMIT_REGEX,
+                "deadbeef: commit message doesn't match regex: [A-Z0-9\\-]+: .*"));
+        verify(settings).getString("excludeBranchRegex");
+    }
+
+    @Test
+    public void testCheckRefChange_excludeBranchRegex_commitAllowedIfNoJiraIssuesAndBranchIsExcluded() {
         when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
-        when(settings.getBoolean("ignoreUnknownIssueProjectKeys", false)).thenReturn(true);
-        when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
-        when(jiraService.doesProjectExist("UTF")).thenReturn(false);
         when(settings.getString("excludeBranchRegex")).thenReturn("skipcheck");
 
         RefChange refChange = mockRefChange();
         when(refChange.getRefId()).thenReturn("refs/heads/skipcheck");
 
         YaccCommit commit = mockCommit();
-        when(commit.getMessage()).thenReturn("this commit message has no jira issues. UTF-8 is not a valid issue because it has an invalid project key.");
+        when(commit.getMessage()).thenReturn("no JIRA issues but will be allowed anyway");
         when(commitsService.getNewCommits(any(Repository.class), any(RefChange.class))).thenReturn(Sets.newHashSet(commit));
 
         List<YaccError> errors = yaccService.checkRefChange(null, settings, refChange);

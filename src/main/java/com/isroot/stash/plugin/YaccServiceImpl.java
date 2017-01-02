@@ -1,17 +1,5 @@
 package com.isroot.stash.plugin;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.annotation.Nonnull;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.atlassian.bitbucket.auth.AuthenticationContext;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.RefChangeType;
@@ -23,6 +11,16 @@ import com.atlassian.stash.scm.git.GitRefPattern;
 import com.google.common.collect.Lists;
 import com.isroot.stash.plugin.checks.BranchNameCheck;
 import com.isroot.stash.plugin.errors.YaccError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 /**
  * @author Sean Ford
@@ -134,7 +132,7 @@ public class YaccServiceImpl implements YaccService {
         if(excludeBranchRegex != null && !excludeBranchRegex.isEmpty()) {
             Pattern pattern = Pattern.compile(excludeBranchRegex);
             Matcher matcher = pattern.matcher(branchName);
-            if(matcher.find()) {
+            if(matcher.matches()) {
                 return true;
             }
         }

@@ -178,9 +178,9 @@
 
    {call aui.form.textField}
 		{param id: 'excludeBranchRegex' /}
-		{param labelContent: 'Exclude Brnach Regex' /}
+		{param labelContent: 'Exclude Branch Regex' /}
 		{param value: $config['excludeBranchRegex'] /}
-		{param descriptionText: 'Exclude commits if branch name matches this regex.' /}
+		{param descriptionText: 'Exclude commits to branches matching this regex.' /}
 		{param errorTexts: $errors ? $errors['excludeBranchRegex'] : null /}
    {/call}
 

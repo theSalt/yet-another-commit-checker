@@ -1,23 +1,22 @@
 package ut.com.isroot.stash.plugin;
 
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
 import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.setting.SettingsValidationErrors;
 import com.isroot.stash.plugin.ConfigValidator;
 import com.isroot.stash.plugin.JiraService;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Sean Ford
@@ -119,7 +118,7 @@ public class ConfigValidatorTest {
 
     @Test
     public void testValidate_excludeBranchRegex_goodRegex() {
-        when(settings.getString("excludeBranchRegex")).thenReturn("^Revert \"|#skipchecks");
+        when(settings.getString("excludeBranchRegex")).thenReturn("valid regex");
 
         configValidator.validate(settings, settingsValidationErrors, repository);
 
