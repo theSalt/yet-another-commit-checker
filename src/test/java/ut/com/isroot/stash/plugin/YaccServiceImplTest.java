@@ -426,7 +426,7 @@ public class YaccServiceImplTest {
 
         YaccCommit commit = mockCommit();
         when(commit.getMessage()).thenReturn("This is a merge commit");
-        when(commit.getParentCount()).thenReturn(2);
+        when(commit.isMerge()).thenReturn(true);
         when(commitsService.getNewCommits(any(Repository.class), any(RefChange.class))).thenReturn(Sets.newHashSet(commit));
 
         List<YaccError> errors = yaccService.checkRefChange(null, settings, mockRefChange());
@@ -530,7 +530,7 @@ public class YaccServiceImplTest {
         when(commit.getCommitter().getName()).thenReturn("John Smith");
         when(commit.getCommitter().getEmailAddress()).thenReturn("jsmith@example.com");
         when(commit.getId()).thenReturn("deadbeef");
-        when(commit.getParentCount()).thenReturn(1);
+        when(commit.isMerge()).thenReturn(false);
         return commit;
     }
 

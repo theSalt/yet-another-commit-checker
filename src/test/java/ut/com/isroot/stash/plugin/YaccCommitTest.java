@@ -15,7 +15,7 @@ public class YaccCommitTest {
     @Test
     public void testConstructor_trailingNewLineInCommitMessageIsRemoved() {
         YaccCommit yaccCommit = new YaccCommit("id", new YaccPerson("Name", "email@address.com"),
-                "contains trailing newline\n", 0);
+                "contains trailing newline\n", false);
 
         assertThat(yaccCommit.getMessage()).isEqualTo("contains trailing newline");
 

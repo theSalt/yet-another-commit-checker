@@ -1,28 +1,20 @@
 package com.isroot.stash.plugin;
 
-import com.atlassian.bitbucket.commit.Commit;
-import com.atlassian.bitbucket.commit.CommitService;
-import com.atlassian.bitbucket.commit.CommitsBetweenRequest;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.RefChangeType;
 import com.atlassian.bitbucket.repository.Repository;
-import com.atlassian.bitbucket.server.ApplicationPropertiesService;
-import com.atlassian.bitbucket.util.Page;
-import com.atlassian.bitbucket.util.PageProvider;
-import com.atlassian.bitbucket.util.PageRequest;
-import com.atlassian.bitbucket.util.PagedIterable;
-import com.atlassian.stash.scm.git.GitRefPattern;
+import com.atlassian.bitbucket.scm.ScmService;
+import com.atlassian.bitbucket.scm.git.GitRefPattern;
+import com.atlassian.bitbucket.scm.git.command.GitScmCommandBuilder;
+import com.atlassian.bitbucket.scm.git.command.revlist.GitRevListBuilder;
 import com.google.common.collect.Sets;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.PersonIdent;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevObject;
-import org.eclipse.jgit.revwalk.RevTag;
-import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import com.isroot.stash.plugin.commits.RevListOutputHandler;
+import com.isroot.stash.plugin.commits.ShowRefsOutputHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -30,12 +22,12 @@ import java.util.Set;
  * @since 2013-10-26
  */
 public class CommitsServiceImpl implements CommitsService {
-    private final CommitService commitService;
-    private final ApplicationPropertiesService applicationPropertiesService;
+    private final Logger log = LoggerFactory.getLogger(CommitsServiceImpl.class);
 
-    public CommitsServiceImpl(CommitService commitService, ApplicationPropertiesService applicationPropertiesService) {
-        this.commitService = commitService;
-        this.applicationPropertiesService = applicationPropertiesService;
+    private final ScmService scmService;
+
+    public CommitsServiceImpl(ScmService scmService) {
+        this.scmService = scmService;
     }
 
     /**
@@ -43,103 +35,82 @@ public class CommitsServiceImpl implements CommitsService {
      */
     @Override
     public Set<YaccCommit> getNewCommits(Repository repository, RefChange refChange) {
-        try {
-            org.eclipse.jgit.lib.Repository jGitRepo = getJGitRepo(repository);
+        log.debug("getNewCommits, refChange.toHash={}", refChange.getToHash());
 
-            RevWalk walk = new RevWalk(jGitRepo);
+        /* Tags are different to regular commits - they're just pointers.
+         * The only relevent commitId is the destination one (and even then only for
+         * ADD and UPDATE).
+         * We need to work out whether or not the tag is lightweight (in which case
+         * its commitid is an already-existing commit that we don't want to check -
+         * it may have been made by someone else) or annotated (in which case we do
+         * care.
+         *
+         * Stash's API to work out the tag type doesn't work (see STASH-4993)
+         * and since we're using JGit anyway, just use it for the whole lot.
+         */
+        Set<YaccCommit> yaccCommits = Sets.newHashSet();
 
-            /* Tags are different to regular commits - they're just pointers.
-             * The only relevent commitId is the destination one (and even then only for
-             * ADD and UPDATE).
-             * We need to work out whether or not the tag is lightweight (in which case
-             * its commitid is an already-existing commit that we don't want to check - 
-             * it may have been made by someone else) or annotated (in which case we do
-             * care.
-             *
-             * Stash's API to work out the tag type doesn't work (see STASH-4993)
-             * and since we're using JGit anyway, just use it for the whole lot.
-             */
-            Set<YaccCommit> yaccCommits = Sets.newHashSet();
-
-            if (refChange.getRefId().startsWith(GitRefPattern.TAGS.getPath())) {
-                if (refChange.getType() == RefChangeType.DELETE) {
-                    // Deletes don't leave anything to check
-                    return yaccCommits;
-                }
-
-                RevObject obj = walk.parseAny(ObjectId.fromString(refChange.getToHash()));
-                if (!(obj instanceof RevTag)) {
-                    // Just a lightweight tag - nothing to check
-                    return yaccCommits;
-                }
-
-                RevTag tag = (RevTag) obj;
-
-                PersonIdent ident = tag.getTaggerIdent();
-                final String message = tag.getFullMessage();
-                final YaccPerson committer = new YaccPerson(ident.getName(), ident.getEmailAddress());
-                final YaccCommit yaccCommit = new YaccCommit(refChange.getToHash(), committer, message, 1);
-
-                yaccCommits.add(yaccCommit);
-            } else {
-                final CommitsBetweenRequest request = new CommitsBetweenRequest.Builder(repository)
-                        .exclude(getBranches(repository))
-                        .include(refChange.getToHash())
-                        .build();
-                // Make sure to get all of the changes
-                Iterable<Commit> commits = new PagedIterable<>(new PageProvider<Commit>() {
-                    @Override
-                    public Page<Commit> get(PageRequest pr) {
-                        return commitService.getCommitsBetween(request, pr);
-                    }
-                }, 100);
-
-                for (Commit commit : commits) {
-                    final RevCommit revCommit = walk.parseCommit(ObjectId.fromString(commit.getId()));
-
-                    /* Note that we use committer, instead of author -- for most commits, these will be identical. Where
-                     * this differs is if a patch *author* submits a patch (eg, consider an external contribution), and
-                     * the *committer* actually applies the patch.
-                     *
-                     * By validating the committer here, we can allow surrogate commits on behalf of patch submitters,
-                     * while still ensuring that the authenticated user is either the author *or* the committer.
-                     */
-                    final PersonIdent ident = revCommit.getCommitterIdent();
-                    final String message = revCommit.getFullMessage();
-                    final YaccPerson committer = new YaccPerson(ident.getName(), ident.getEmailAddress());
-                    final YaccCommit yaccCommit = new YaccCommit(commit.getId(), committer, message, revCommit.getParentCount());
-
-                    yaccCommits.add(yaccCommit);
-                }
+        if (refChange.getRefId().startsWith(GitRefPattern.TAGS.getPath())) {
+            if (refChange.getType() == RefChangeType.DELETE) {
+                // Deletes don't leave anything to check
+                return yaccCommits;
             }
 
-            return yaccCommits;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            // TODO FIXME!
+
+//
+//                RevObject obj = walk.parseAny(ObjectId.fromString(refChange.getToHash()));
+//                if (!(obj instanceof RevTag)) {
+//                    // Just a lightweight tag - nothing to check
+//                    return yaccCommits;
+//                }
+//
+//                RevTag tag = (RevTag) obj;
+//
+//                PersonIdent ident = tag.getTaggerIdent();
+//                final String message = tag.getFullMessage();
+//                final YaccPerson committer = new YaccPerson(ident.getName(), ident.getEmailAddress());
+//                final YaccCommit yaccCommit = new YaccCommit(refChange.getToHash(), committer, message, 1);
+//
+//                yaccCommits.add(yaccCommit);
         }
-    }
+        else {
+            Set<String> branches = getBranches(getGitScmCommandBuilder(repository));
 
-    private Set<String> getBranches(Repository repository) {
-        try {
-            org.eclipse.jgit.lib.Repository jGitRepo = getJGitRepo(repository);
+            log.debug("finding commits reachable from {} but not {}", refChange.getToHash(),
+                    branches);
 
-            Set<String> refHeads = Sets.newHashSet();
-
-            for (String ref : jGitRepo.getAllRefs().keySet()) {
-                if (ref.startsWith("refs/heads/")) {
-                    refHeads.add(ref);
-                }
+            GitRevListBuilder revListBuilder = getGitScmCommandBuilder(repository).revList()
+                    .format("full")
+                    .rev(refChange.getToHash());
+            for (String branch : branches) {
+                revListBuilder = revListBuilder.rev("^" + branch);
             }
 
-            return refHeads;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            List<YaccCommit> found = revListBuilder.build(new RevListOutputHandler())
+                    .call();
+
+            if (found != null) {
+                yaccCommits.addAll(found);
+            }
         }
+
+        log.debug("found {} commits that need checking", yaccCommits.size());
+
+        return yaccCommits;
     }
 
-    private org.eclipse.jgit.lib.Repository getJGitRepo (Repository repository) throws IOException {
-        FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        File repoDir = applicationPropertiesService.getRepositoryDir(repository);
-        return builder.setGitDir(repoDir).build();
+    private Set<String> getBranches(GitScmCommandBuilder builder) {
+        List<String> branches = builder.command("show-ref")
+                .argument("--heads")
+                .build(new ShowRefsOutputHandler()).call();
+
+        log.debug("refs={}", branches);
+
+        return new HashSet<>(branches);
+    }
+
+    private GitScmCommandBuilder getGitScmCommandBuilder(Repository repository) {
+        return (GitScmCommandBuilder) scmService.createBuilder(repository);
     }
 }

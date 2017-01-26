@@ -4,19 +4,24 @@ package com.isroot.stash.plugin;
  * Minimal metadata required to verify a commit.
  */
 public class YaccCommit {
+    private final String id;
+    private final YaccPerson committer;
+    private final String message;
+    private final boolean isMerge;
+
     /**
      * Construct a new commit instance.
      *
      * @param id Commit ID (eg, Git hash).
      * @param committer The committer.
      * @param message Git commit message.
-     * @param parentCount The number of parent commits listed in this commit.
+     * @param isMerge true if merge commit
      */
-    public YaccCommit (String id, YaccPerson committer, String message, int parentCount) {
+    public YaccCommit (String id, YaccPerson committer, String message, boolean isMerge) {
         this.id = id;
         this.committer = committer;
         this.message = removeTrailingNewLine(message);
-        this.parentCount = parentCount;
+        this.isMerge = isMerge;
     }
 
     /**
@@ -42,7 +47,6 @@ public class YaccCommit {
         return id;
     }
 
-
     /**
      * Return the git committer identity associated with this commit.
      *
@@ -61,17 +65,7 @@ public class YaccCommit {
         return message;
     }
 
-    /**
-     * Return the number of parent commits listed in this commit.
-     *
-     * @return Number of parents.
-     */
-    public int getParentCount() {
-        return parentCount;
+    public boolean isMerge() {
+        return isMerge;
     }
-
-    private final String id;
-    private final YaccPerson committer;
-    private final String message;
-    private final int parentCount;
 }

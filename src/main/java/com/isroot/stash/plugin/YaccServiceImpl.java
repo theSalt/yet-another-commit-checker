@@ -4,10 +4,10 @@ import com.atlassian.bitbucket.auth.AuthenticationContext;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.RefChangeType;
 import com.atlassian.bitbucket.repository.Repository;
+import com.atlassian.bitbucket.scm.git.GitRefPattern;
 import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.user.ApplicationUser;
 import com.atlassian.bitbucket.user.UserType;
-import com.atlassian.stash.scm.git.GitRefPattern;
 import com.google.common.collect.Lists;
 import com.isroot.stash.plugin.checks.BranchNameCheck;
 import com.isroot.stash.plugin.errors.YaccError;
@@ -99,7 +99,7 @@ public class YaccServiceImpl implements YaccService {
 
     private boolean isCommitExcluded(Settings settings, YaccCommit commit) {
         // Exclude Merge Commit setting
-        if(settings.getBoolean("excludeMergeCommits", false) && commit.getParentCount() > 1) {
+        if(settings.getBoolean("excludeMergeCommits", false) && commit.isMerge()) {
             log.debug("skipping commit {} because it is a merge commit", commit.getId());
 
             return true;
