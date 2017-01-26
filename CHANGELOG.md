@@ -1,5 +1,9 @@
 # YACC Changelog
 
+### 1.13 (unreleased)
+
+* Feature (/ Bugfix :-): Support BitBucket Server 4.13.0 and git 2.11. Thanks [@bturner](https://github.com/bturner) for the help!
+
 ### 1.12
 
 * Feature: Support multiple JIRA instances. Thanks [@bbaetz](https://github.com/bbaetz)!
