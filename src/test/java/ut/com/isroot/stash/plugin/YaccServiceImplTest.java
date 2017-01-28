@@ -9,7 +9,7 @@ import com.atlassian.bitbucket.user.ApplicationUser;
 import com.atlassian.bitbucket.user.UserType;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.isroot.stash.plugin.CommitsService;
+import com.isroot.stash.plugin.commits.CommitsService;
 import com.isroot.stash.plugin.IssueKey;
 import com.isroot.stash.plugin.JiraService;
 import com.isroot.stash.plugin.YaccCommit;

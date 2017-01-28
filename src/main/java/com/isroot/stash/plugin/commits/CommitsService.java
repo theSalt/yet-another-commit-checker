@@ -1,7 +1,8 @@
-package com.isroot.stash.plugin;
+package com.isroot.stash.plugin.commits;
 
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.Repository;
+import com.isroot.stash.plugin.YaccCommit;
 
 import java.util.Set;
 
@@ -18,5 +19,5 @@ public interface CommitsService {
      * @param refChange {@link RefChange} to start from
      * @return A {@link Set} of {@link YaccCommit}s
      */
-    public Set<YaccCommit> getNewCommits(Repository repository, RefChange refChange);
+    Set<YaccCommit> getNewCommits(Repository repository, RefChange refChange);
 }

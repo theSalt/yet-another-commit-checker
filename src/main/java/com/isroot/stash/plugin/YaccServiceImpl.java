@@ -10,6 +10,7 @@ import com.atlassian.bitbucket.user.ApplicationUser;
 import com.atlassian.bitbucket.user.UserType;
 import com.google.common.collect.Lists;
 import com.isroot.stash.plugin.checks.BranchNameCheck;
+import com.isroot.stash.plugin.commits.CommitsService;
 import com.isroot.stash.plugin.errors.YaccError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

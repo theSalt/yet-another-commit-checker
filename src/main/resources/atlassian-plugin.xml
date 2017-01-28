@@ -30,8 +30,8 @@
 
     <component-import key="scmService" interface="com.atlassian.bitbucket.scm.ScmService"/>
 
-    <component key="commitsService" class="com.isroot.stash.plugin.CommitsServiceImpl" public="true">
-        <interface>com.isroot.stash.plugin.CommitsService</interface>
+    <component key="commitsService" class="com.isroot.stash.plugin.commits.CommitsServiceImpl" public="true">
+        <interface>com.isroot.stash.plugin.commits.CommitsService</interface>
     </component>
 
     <component key="jiraService" class="com.isroot.stash.plugin.jira.JiraServiceImpl" public="true">
