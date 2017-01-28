@@ -9,11 +9,9 @@ import com.atlassian.bitbucket.scm.git.command.GitScmCommandBuilder;
 import com.atlassian.bitbucket.scm.git.command.revlist.GitRevListBuilder;
 import com.google.common.collect.Sets;
 import com.isroot.stash.plugin.commits.RevListOutputHandler;
-import com.isroot.stash.plugin.commits.ShowRefsOutputHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -73,19 +71,10 @@ public class CommitsServiceImpl implements CommitsService {
 //                final YaccCommit yaccCommit = new YaccCommit(refChange.getToHash(), committer, message, 1);
 //
 //                yaccCommits.add(yaccCommit);
-        }
-        else {
-            Set<String> branches = getBranches(getGitScmCommandBuilder(repository));
-
-            log.debug("finding commits reachable from {} but not {}", refChange.getToHash(),
-                    branches);
-
+        } else {
             GitRevListBuilder revListBuilder = getGitScmCommandBuilder(repository).revList()
                     .format(RevListOutputHandler.FORMAT)
-                    .rev(refChange.getToHash());
-            for (String branch : branches) {
-                revListBuilder = revListBuilder.rev("^" + branch);
-            }
+                    .revs(refChange.getToHash(), "--not", "--all");
 
             List<YaccCommit> found = revListBuilder.build(new RevListOutputHandler())
                     .call();
@@ -98,16 +87,6 @@ public class CommitsServiceImpl implements CommitsService {
         log.debug("found {} commits that need checking", yaccCommits.size());
 
         return yaccCommits;
-    }
-
-    private Set<String> getBranches(GitScmCommandBuilder builder) {
-        List<String> branches = builder.command("show-ref")
-                .argument("--heads")
-                .build(new ShowRefsOutputHandler()).call();
-
-        log.debug("refs={}", branches);
-
-        return new HashSet<>(branches);
     }
 
     private GitScmCommandBuilder getGitScmCommandBuilder(Repository repository) {
