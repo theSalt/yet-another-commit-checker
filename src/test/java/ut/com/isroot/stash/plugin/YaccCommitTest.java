@@ -1,7 +1,7 @@
 package ut.com.isroot.stash.plugin;
 
+import com.atlassian.bitbucket.user.SimplePerson;
 import com.isroot.stash.plugin.YaccCommit;
-import com.isroot.stash.plugin.YaccPerson;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,10 +14,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class YaccCommitTest {
     @Test
     public void testConstructor_trailingNewLineInCommitMessageIsRemoved() {
-        YaccCommit yaccCommit = new YaccCommit("id", new YaccPerson("Name", "email@address.com"),
+        SimplePerson simplePerson = new SimplePerson("Name", "email@address.com");
+
+        YaccCommit yaccCommit = new YaccCommit("id", simplePerson,
                 "contains trailing newline\n", false);
 
         assertThat(yaccCommit.getMessage()).isEqualTo("contains trailing newline");
-
     }
 }

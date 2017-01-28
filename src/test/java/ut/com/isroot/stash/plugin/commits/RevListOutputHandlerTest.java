@@ -18,11 +18,9 @@ public class RevListOutputHandlerTest {
     @Test
     public void testGetOutput_singleCommit() {
         List<YaccCommit> commits = parse("commit 9a1ced131648d5481e4a3f00b9c5522d466ec693\n" +
-                "Author: Author Last <some@email.com>\n" +
-                "Commit: Commit Last <some@email.com>\n" +
-                "\n" +
-                "    this is my commit message\n" +
-                "\n");
+                "9a1ced131648d5481e4a3f00b9c5522d466ec693\u0002a293f806780249dc855ff560cb70f3c21c7f9c1e\u0002Commit Last\u0002some@email.com\n" +
+                "this is my commit message\n" +
+                "\u0003END\u0004");
 
         assertThat(commits).hasSize(1);
         YaccCommit commit = commits.get(0);
@@ -35,17 +33,13 @@ public class RevListOutputHandlerTest {
     @Test
     public void testGetOutput_multipleCommits() {
         List<YaccCommit> commits = parse("commit 9a1ced131648d5481e4a3f00b9c5522d466ec693\n" +
-                "Author: Author Last <some@email.com>\n" +
-                "Commit: Commit Last <some@email.com>\n" +
-                "\n" +
-                "    this is my commit message\n" +
-                "\n" +
+                "9a1ced131648d5481e4a3f00b9c5522d466ec693\u0002a293f806780249dc855ff560cb70f3c21c7f9c1e\u0002Commit Last\u0002some@email.com\n" +
+                "this is my commit message\n" +
+                "\u0003END\u0004\n" +
                 "commit 1060dc57a0c0b27fdd7aef1481ca914a1d7d084e\n" +
-                "Author: Author SecondCommit <secondcommit@email.com>\n" +
-                "Commit: Commit SecondCommit <secondcommit@email.com>\n" +
-                "\n" +
-                "    second commit\n" +
-                "\n");
+                "1060dc57a0c0b27fdd7aef1481ca914a1d7d084e\u0002a293f806780249dc855ff560cb70f3c21c7f9c1e\u0002Commit SecondCommit\u0002secondcommit@email.com\n" +
+                "second commit\n" +
+                "\u0003END\u0004");
 
         assertThat(commits).hasSize(2);
 
@@ -65,12 +59,9 @@ public class RevListOutputHandlerTest {
     @Test
     public void testGetOutput_mergeCommit() {
         List<YaccCommit> commits = parse("commit 9a1ced131648d5481e4a3f00b9c5522d466ec693\n" +
-                "Merge: c5b2f7b dc27df2\n" +
-                "Author: Author Last <some@email.com>\n" +
-                "Commit: Commit Last <some@email.com>\n" +
-                "\n" +
-                "    this is my commit message\n" +
-                "\n");
+                "9a1ced131648d5481e4a3f00b9c5522d466ec693\u0002a293f806780249dc855ff560cb70f3c21c7f9c1e 2f4d8f6c46e0a8814ea447dcdc1ea5f3a1bba30f\u0002Commit Last\u0002some@email.com\n" +
+                "this is my commit message\n" +
+                "\u0003END\u0004");
 
         assertThat(commits.get(0).isMerge()).isTrue();
     }
@@ -78,16 +69,24 @@ public class RevListOutputHandlerTest {
     @Test
     public void testGetOutput_multiLineCommitMessage() {
         List<YaccCommit> commits = parse("commit 9a1ced131648d5481e4a3f00b9c5522d466ec693\n" +
-                "Author: Author Last <some@email.com>\n" +
-                "Commit: Commit Last <some@email.com>\n" +
-                "Date:   Wed Jan 25 23:16:02 2017 -0800\n" +
+                "9a1ced131648d5481e4a3f00b9c5522d466ec693\u0002a293f806780249dc855ff560cb70f3c21c7f9c1e 2f4d8f6c46e0a8814ea447dcdc1ea5f3a1bba30f\u0002Commit Last\u0002some@email.com\n" +
+                "Multiple\n" +
                 "\n" +
-                "    Multiple\n" +
-                "    \n" +
-                "    Lines\n" +
-                "\n");
+                "Lines\n" +
+                "\u0003END\u0004");
 
         assertThat(commits.get(0).getMessage()).isEqualTo("Multiple\n\nLines");
+    }
+
+    @Test
+    public void testGetOutput_emptyEmailAllowed() {
+        List<YaccCommit> commits = parse("commit 9a1ced131648d5481e4a3f00b9c5522d466ec693\n" +
+                "9a1ced131648d5481e4a3f00b9c5522d466ec693\u00029a1ced131648d5481e4a3f00b9c5522d466ec693\u0002Commit Last\u0002\n" +
+                "this is my commit message\n" +
+                "\u0003END\u0004");
+
+
+        assertThat(commits.get(0).getCommitter().getEmailAddress()).isEmpty();
     }
 
     private List<YaccCommit> parse(String revList) {

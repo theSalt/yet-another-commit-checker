@@ -1,11 +1,13 @@
 package com.isroot.stash.plugin;
 
+import com.atlassian.bitbucket.user.SimplePerson;
+
 /**
  * Minimal metadata required to verify a commit.
  */
 public class YaccCommit {
     private final String id;
-    private final YaccPerson committer;
+    private final SimplePerson committer;
     private final String message;
     private final boolean isMerge;
 
@@ -17,7 +19,7 @@ public class YaccCommit {
      * @param message Git commit message.
      * @param isMerge true if merge commit
      */
-    public YaccCommit (String id, YaccPerson committer, String message, boolean isMerge) {
+    public YaccCommit (String id, SimplePerson committer, String message, boolean isMerge) {
         this.id = id;
         this.committer = committer;
         this.message = removeTrailingNewLine(message);
@@ -52,7 +54,7 @@ public class YaccCommit {
      *
      * @return Git committer identity.
      */
-    public YaccPerson getCommitter() {
+    public SimplePerson getCommitter() {
         return committer;
     }
 

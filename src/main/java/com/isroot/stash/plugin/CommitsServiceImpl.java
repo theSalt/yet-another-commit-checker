@@ -81,7 +81,7 @@ public class CommitsServiceImpl implements CommitsService {
                     branches);
 
             GitRevListBuilder revListBuilder = getGitScmCommandBuilder(repository).revList()
-                    .format("full")
+                    .format(RevListOutputHandler.FORMAT)
                     .rev(refChange.getToHash());
             for (String branch : branches) {
                 revListBuilder = revListBuilder.rev("^" + branch);
