@@ -3,8 +3,8 @@ package com.isroot.stash.plugin.commits;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.RefChangeType;
 import com.atlassian.bitbucket.repository.Repository;
+import com.atlassian.bitbucket.repository.StandardRefType;
 import com.atlassian.bitbucket.scm.ScmService;
-import com.atlassian.bitbucket.scm.git.GitRefPattern;
 import com.atlassian.bitbucket.scm.git.GitScm;
 import com.atlassian.bitbucket.scm.git.command.GitScmCommandBuilder;
 import com.atlassian.bitbucket.scm.git.command.revlist.GitRevListBuilder;
@@ -34,8 +34,9 @@ public class CommitsServiceImpl implements CommitsService {
      */
     @Override
     public Set<YaccCommit> getNewCommits(Repository repository, RefChange refChange) {
-        log.debug("getNewCommits, scmId={} refChange.toHash={}", repository.getScmId(),
-                refChange.getToHash());
+        log.debug("getNewCommits, scmId={} refType={} refId={} toHash={} changeType={}",
+                repository.getScmId(), refChange.getRef().getType(), refChange.getRef().getId(),
+                refChange.getToHash(), refChange.getType());
 
         Set<YaccCommit> yaccCommits = Sets.newHashSet();
 
@@ -45,41 +46,22 @@ public class CommitsServiceImpl implements CommitsService {
             return yaccCommits;
         }
 
-        /* Tags are different to regular commits - they're just pointers.
-         * The only relevent commitId is the destination one (and even then only for
-         * ADD and UPDATE).
-         * We need to work out whether or not the tag is lightweight (in which case
-         * its commitid is an already-existing commit that we don't want to check -
-         * it may have been made by someone else) or annotated (in which case we do
-         * care.
-         *
-         * Stash's API to work out the tag type doesn't work (see STASH-4993)
-         * and since we're using JGit anyway, just use it for the whole lot.
-         */
-
-        if (refChange.getRefId().startsWith(GitRefPattern.TAGS.getPath())) {
+        if (refChange.getRef().getType().equals(StandardRefType.TAG)) {
             if (refChange.getType() == RefChangeType.DELETE) {
                 // Deletes don't leave anything to check
                 return yaccCommits;
             }
 
-            // TODO FIXME!
+            String hash = refChange.getToHash();
+            YaccCommit commit = getGitScmCommandBuilder(repository).catFile()
+                    .pretty()
+                    .object(hash)
+                    .build(new AnnotatedTagOutputHandler(hash)).call();
 
-//
-//                RevObject obj = walk.parseAny(ObjectId.fromString(refChange.getToHash()));
-//                if (!(obj instanceof RevTag)) {
-//                    // Just a lightweight tag - nothing to check
-//                    return yaccCommits;
-//                }
-//
-//                RevTag tag = (RevTag) obj;
-//
-//                PersonIdent ident = tag.getTaggerIdent();
-//                final String message = tag.getFullMessage();
-//                final YaccPerson committer = new YaccPerson(ident.getName(), ident.getEmailAddress());
-//                final YaccCommit yaccCommit = new YaccCommit(refChange.getToHash(), committer, message, 1);
-//
-//                yaccCommits.add(yaccCommit);
+            if (commit != null) {
+                log.debug("found annotated tag");
+                yaccCommits.add(commit);
+            }
         } else {
             GitRevListBuilder revListBuilder = getGitScmCommandBuilder(repository).revList()
                     .format(RevListOutputHandler.FORMAT)

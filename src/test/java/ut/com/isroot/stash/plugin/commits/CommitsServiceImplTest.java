@@ -1,5 +1,6 @@
 package ut.com.isroot.stash.plugin.commits;
 
+import com.atlassian.bitbucket.repository.MinimalRef;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.Repository;
 import com.isroot.stash.plugin.YaccCommit;
@@ -12,6 +13,7 @@ import org.mockito.MockitoAnnotations;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -29,6 +31,8 @@ public class CommitsServiceImplTest {
         MockitoAnnotations.initMocks(this);
 
         commitsService = new CommitsServiceImpl(null);
+
+        when(refChange.getRef()).thenReturn(mock(MinimalRef.class));
     }
 
     @Test
