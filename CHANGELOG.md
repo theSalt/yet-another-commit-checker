@@ -1,10 +1,12 @@
 # YACC Changelog
 
-### 1.13 (unreleased)
+### 1.13 (2017-01-30)
 
-* Feature (/ Bugfix :-): Support BitBucket Server 4.13.0 and git 2.11. Thanks [@bturner](https://github.com/bturner) for the help!
+* Feature (/ Bugfix :-): Add support for git 2.11. Thanks [@bturner](https://github.com/bturner) for the help!
 
-### 1.12
+Note: Previous versions of YACC should work in BitBucket Server 4.13 if using git version 2.10 or below. If you are using git 2.11, you must upgrade to YACC 1.13.
+
+### 1.12 (2017-01-18)
 
 * Feature: Support multiple JIRA instances. Thanks [@bbaetz](https://github.com/bbaetz)!
 * Feature: Check committer email against regex (ex: validate email domain). Thanks [@mludy](https://github.com/mludy)!
