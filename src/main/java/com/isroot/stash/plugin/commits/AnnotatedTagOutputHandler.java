@@ -21,8 +21,6 @@ public class AnnotatedTagOutputHandler extends LineReaderOutputHandler
         implements CommandOutputHandler<YaccCommit> {
     private static final Logger log = LoggerFactory.getLogger(AnnotatedTagOutputHandler.class);
 
-    private static final String OBJECT_END = "\u0003END\u0004";
-
     private String ref;
     private YaccCommit yaccCommit = null;
 
@@ -79,7 +77,7 @@ public class AnnotatedTagOutputHandler extends LineReaderOutputHandler
         String message = "";
 
         String line;
-        while ((line = readLine(lineReader)) != null && !line.equals(OBJECT_END)) {
+        while ((line = readLine(lineReader)) != null) {
             message += line + "\n";
         }
 
