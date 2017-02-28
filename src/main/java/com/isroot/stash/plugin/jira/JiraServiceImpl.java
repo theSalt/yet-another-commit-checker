@@ -78,7 +78,7 @@ public class JiraServiceImpl implements JiraService {
             // 1) If project key does not exist, an 200 with zero result size is returned
             // 2) If project key exists but issue number does not exist, a 400 response due to
             //    invalid JQL is returned
-            if (!execute("issueKey=" + issueKey.getFullyQualifiedIssueKey(),
+            if (!execute("issueKey='" + issueKey.getFullyQualifiedIssueKey() + "'",
                     SUCCESS_ON.NON_ZERO_RESULT, false)) {
                 errors.add(new YaccError(YaccError.Type.ISSUE_JQL, "%s: JIRA Issue does not exist",
                         issueKey.getFullyQualifiedIssueKey()));
@@ -98,7 +98,9 @@ public class JiraServiceImpl implements JiraService {
         checkNotNull(projectKey, "projectKey is null");
 
         try {
-            return execute("project = " + projectKey, SUCCESS_ON.STATUS_200, false);
+            String jql = String.format("project = '%s'", projectKey);
+
+            return execute(jql, SUCCESS_ON.STATUS_200, false);
         } catch (JiraLookupsException e) {
 
             // Assume project exists if there is any sort of error. If there
