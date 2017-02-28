@@ -1,5 +1,9 @@
 # YACC Changelog
 
+### 1.14 (UNRELEASED)
+
+* Bugfix: Fixed JIRA JQL validation errors when project key is a JIRA JQL keyword. Thanks [@rc-ck](https://github.com/rc-ck)! 
+
 ### 1.13 (2017-01-30)
 
 * Feature (/ Bugfix :-): Add support for git 2.11. Thanks [@bturner](https://github.com/bturner) for the help!
