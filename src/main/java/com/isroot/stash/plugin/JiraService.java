@@ -15,6 +15,6 @@ public interface JiraService {
     boolean doesJiraApplicationLinkExist();
     List<YaccError> doesIssueMatchJqlQuery(String jqlQuery, IssueKey issueKey);
     List<YaccError> doesIssueExist(IssueKey issueKey);
-    boolean doesProjectExist(String projectKey);
+    boolean doesProjectExist(IssueKey issueKey);
     List<String> checkJqlQuery(@Nonnull String jqlQuery);
 }

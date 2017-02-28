@@ -11,19 +11,16 @@ import java.util.regex.Pattern;
  */
 public class IssueKey {
     /**
-     * Parse any issue keys (i.e., strings that match the standard issue key format) found within the given input.
-     *
-     * @param input The input string to be parsed for issue keys.
+     * A regex pattern that matches on JIRA issue keys. The individual components of a valid match
+     * should be extracted using the {@link #getMatchedProjectKey(java.util.regex.Matcher)} and {@link #getMatchedProjectKey(java.util.regex.Matcher)}
+     * methods.
      */
-    static public List<IssueKey> parseIssueKeys(String input) {
-        List<IssueKey> issueKeys = Lists.newArrayList();
-        Matcher matcher = ISSUE_PATTERN.matcher(input);
-        while (matcher.find()) {
-            issueKeys.add(new IssueKey(getMatchedProjectKey(matcher), getMatchedIssueId(matcher)));
-        }
-
-        return issueKeys;
-    }
+    private static Pattern ISSUE_PATTERN = Pattern.compile("([A-Z][A-Z_0-9]+)-([0-9]+)");
+    private static Pattern PROJECT_PATTERN = Pattern.compile("[A-Z][A-Z_0-9]+");
+    /** JIRA project key */
+    private final String projectKey;
+    /** JIRA project-relative issue identifier */
+    private final String issueId;
 
     /**
      * Parse the given issue key string.
@@ -48,8 +45,48 @@ public class IssueKey {
      * @param issueId The issue's project-relative issue identifier.
      */
     public IssueKey(String projectKey, String issueId) {
+        Matcher matcher = PROJECT_PATTERN.matcher(projectKey);
+        if(!matcher.matches()) {
+            throw new IllegalArgumentException("projectKey contains invalid characters");
+        }
+
         this.projectKey = projectKey;
         this.issueId = issueId;
+    }
+
+    /**
+     * Parse any issue keys (i.e., strings that match the standard issue key format) found within the given input.
+     *
+     * @param input The input string to be parsed for issue keys.
+     */
+    static public List<IssueKey> parseIssueKeys(String input) {
+        List<IssueKey> issueKeys = Lists.newArrayList();
+        Matcher matcher = ISSUE_PATTERN.matcher(input);
+        while (matcher.find()) {
+            issueKeys.add(new IssueKey(getMatchedProjectKey(matcher), getMatchedIssueId(matcher)));
+        }
+
+        return issueKeys;
+    }
+
+    /**
+     * Return the project key matched by {@link #ISSUE_PATTERN}.
+     *
+     * @param matcher A successfully matching {@link #ISSUE_PATTERN} matcher.
+     * @return The matched project key.
+     */
+    private static String getMatchedProjectKey(Matcher matcher) {
+        return matcher.group(1);
+    }
+
+    /**
+     * Return the issue identifier matched by {@link #ISSUE_PATTERN}.
+     *
+     * @param matcher A successfully matching {@link #ISSUE_PATTERN} matcher.
+     * @return The matched issue identifier.
+     */
+    private static String getMatchedIssueId(Matcher matcher) {
+        return matcher.group(2);
     }
 
     /**
@@ -108,38 +145,5 @@ public class IssueKey {
         int result = projectKey.hashCode();
         result = 31 * result + issueId.hashCode();
         return result;
-    }
-
-    /** JIRA project key */
-    private final String projectKey;
-
-    /** JIRA project-relative issue identifier */
-    private final String issueId;
-
-    /**
-     * A regex pattern that matches on JIRA issue keys. The individual components of a valid match
-     * should be extracted using the {@link #getMatchedProjectKey(java.util.regex.Matcher)} and {@link #getMatchedProjectKey(java.util.regex.Matcher)}
-     * methods.
-     */
-    private static Pattern ISSUE_PATTERN = Pattern.compile("([A-Z][A-Z_0-9]+)-([0-9]+)");
-
-    /**
-     * Return the project key matched by {@link #ISSUE_PATTERN}.
-     *
-     * @param matcher A successfully matching {@link #ISSUE_PATTERN} matcher.
-     * @return The matched project key.
-     */
-    private static String getMatchedProjectKey(Matcher matcher) {
-        return matcher.group(1);
-    }
-
-    /**
-     * Return the issue identifier matched by {@link #ISSUE_PATTERN}.
-     *
-     * @param matcher A successfully matching {@link #ISSUE_PATTERN} matcher.
-     * @return The matched issue identifier.
-     */
-    private static String getMatchedIssueId(Matcher matcher) {
-        return matcher.group(2);
     }
 }

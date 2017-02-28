@@ -235,8 +235,8 @@ public class YaccServiceImplTest {
         when(settings.getBoolean("ignoreUnknownIssueProjectKeys", false)).thenReturn(true);
 
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
-        when(jiraService.doesProjectExist("ABC")).thenReturn(true);
-        when(jiraService.doesProjectExist("UTF")).thenReturn(false);
+        when(jiraService.doesProjectExist(new IssueKey("ABC", "123"))).thenReturn(true);
+        when(jiraService.doesProjectExist(new IssueKey("UTF", "8"))).thenReturn(false);
 
         YaccCommit commit = mockCommit();
         when(commit.getMessage()).thenReturn("ABC-123: this commit has valid issue id and an invalid issue id of UTF-8");
@@ -254,7 +254,7 @@ public class YaccServiceImplTest {
         when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
         when(settings.getBoolean("ignoreUnknownIssueProjectKeys", false)).thenReturn(true);
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
-        when(jiraService.doesProjectExist("UTF")).thenReturn(false);
+        when(jiraService.doesProjectExist(new IssueKey("UTF", "8"))).thenReturn(false);
 
         YaccCommit commit = mockCommit();
         when(commit.getMessage()).thenReturn("this commit message has no jira issues. UTF-8 is not a valid issue because it has an invalid project key.");
@@ -473,7 +473,7 @@ public class YaccServiceImplTest {
         when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
         when(settings.getBoolean("ignoreUnknownIssueProjectKeys", false)).thenReturn(true);
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
-        when(jiraService.doesProjectExist("UTF")).thenReturn(false);
+        when(jiraService.doesProjectExist(new IssueKey("UTF", "8"))).thenReturn(false);
 
         YaccCommit commit = mockCommit();
         when(commit.getMessage()).thenReturn("this commit message has no jira issues. UTF-8 is not a valid issue because it has an invalid project key.");

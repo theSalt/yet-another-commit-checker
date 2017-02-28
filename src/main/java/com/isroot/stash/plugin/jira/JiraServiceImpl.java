@@ -94,11 +94,11 @@ public class JiraServiceImpl implements JiraService {
     }
 
     @Override
-    public boolean doesProjectExist(String projectKey) {
-        checkNotNull(projectKey, "projectKey is null");
+    public boolean doesProjectExist(IssueKey issueKey) {
+        checkNotNull(issueKey, "issueKey is null");
 
         try {
-            String jql = String.format("project = '%s'", projectKey);
+            String jql = String.format("project = '%s'", issueKey.getProjectKey());
 
             return execute(jql, SUCCESS_ON.STATUS_200, false);
         } catch (JiraLookupsException e) {

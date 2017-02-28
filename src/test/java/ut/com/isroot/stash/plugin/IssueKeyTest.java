@@ -7,8 +7,19 @@ import org.junit.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class IssueKeyTest {
+    @Test
+    public void testConstuctor_projectKeyIsValidated() {
+        assertThat(new IssueKey("ABC_123", "1").getProjectKey())
+                .isEqualTo("ABC_123");
+
+        assertThatThrownBy(() -> new IssueKey("!@#", "1"))
+                .isExactlyInstanceOf(IllegalArgumentException.class)
+                .hasMessage("projectKey contains invalid characters");
+    }
+
     @Test
     public void testParseIssueKeys() {
         final List<IssueKey> issueKeys = IssueKey.parseIssueKeys("Issue: ABC-123, CBA-321, UNDER_SCORE-123;");

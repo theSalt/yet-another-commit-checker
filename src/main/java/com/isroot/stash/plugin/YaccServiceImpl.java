@@ -210,7 +210,7 @@ public class YaccServiceImpl implements YaccService {
             /* Remove issues that contain non-existent project keys */
             issues = Lists.newArrayList();
             for (IssueKey issueKey : extractedKeys) {
-                if (jiraService.doesProjectExist(issueKey.getProjectKey())) {
+                if (jiraService.doesProjectExist(issueKey)) {
                     issues.add(issueKey);
                 }
             }

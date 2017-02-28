@@ -190,7 +190,7 @@ public class JiraServiceImplTest {
         JiraServiceImpl jiraService = setupTest(
                 MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(0)));
 
-        assertThat(jiraService.doesProjectExist("TEST"))
+        assertThat(jiraService.doesProjectExist(new IssueKey("TEST", "1")))
                 .isTrue();
     }
 
@@ -199,7 +199,7 @@ public class JiraServiceImplTest {
         JiraServiceImpl jiraService = setupTest(
                 MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", jiraResponse(1)));
 
-        assertThat(jiraService.doesProjectExist("TEST"))
+        assertThat(jiraService.doesProjectExist(new IssueKey("TEST", "1")))
                 .isTrue();
     }
 
@@ -208,7 +208,7 @@ public class JiraServiceImplTest {
         JiraServiceImpl jiraService = setupTest(
                 MockApplicationLink.requestReturnsResponse(Request.MethodType.POST, "/rest/api/2/search", 400));
 
-        assertThat(jiraService.doesProjectExist("TEST"))
+        assertThat(jiraService.doesProjectExist(new IssueKey("TEST", "1")))
                 .isFalse();
     }
 
