@@ -20,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import ut.com.isroot.stash.plugin.mock.MockRefChange;
 
 import java.util.List;
 import java.util.Set;
@@ -372,8 +373,8 @@ public class YaccServiceImplTest {
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
         when(settings.getString("excludeBranchRegex")).thenReturn("skipcheck");
         
-        RefChange refChange = mockRefChange();
-        when(refChange.getRefId()).thenReturn("refs/heads/NoSkipcheck");
+        MockRefChange refChange = mockRefChange()
+                .setRefId("refs/heads/NoSkipcheck");
 
         YaccCommit commit = mockCommit();
         when(commit.getMessage()).thenReturn("this commit message has no jira issues.");
@@ -389,8 +390,8 @@ public class YaccServiceImplTest {
         when(settings.getString("commitMessageRegex")).thenReturn("[A-Z0-9\\-]+: .*");
         when(settings.getString("excludeBranchRegex")).thenReturn("skipcheck");
 
-        RefChange refChange = mockRefChange();
-        when(refChange.getRefId()).thenReturn("refs/heads/some-branch-skipcheck");
+        RefChange refChange = mockRefChange()
+                .setRefId("refs/heads/some-branch-skipcheck");
 
         YaccCommit commit = mockCommit();
         when(commit.getMessage()).thenReturn("this commit message has no jira issues.");
@@ -407,8 +408,8 @@ public class YaccServiceImplTest {
         when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
         when(settings.getString("excludeBranchRegex")).thenReturn("skipcheck");
 
-        RefChange refChange = mockRefChange();
-        when(refChange.getRefId()).thenReturn("refs/heads/skipcheck");
+        RefChange refChange = mockRefChange()
+                .setRefId("refs/heads/skipcheck");
 
         YaccCommit commit = mockCommit();
         when(commit.getMessage()).thenReturn("no JIRA issues but will be allowed anyway");
@@ -534,30 +535,30 @@ public class YaccServiceImplTest {
         return commit;
     }
 
-    private RefChange mockRefAdd() {
-        RefChange refChange = mock(RefChange.class);
-        when(refChange.getFromHash()).thenReturn("0000000000000000000000000000000000000000");
-        when(refChange.getToHash()).thenReturn("35d938b060bb361503e021f228e43351f1a71551");
-        when(refChange.getRefId()).thenReturn("refs/heads/master");
-        when(refChange.getType()).thenReturn(RefChangeType.ADD);
+    private MockRefChange mockRefAdd() {
+        MockRefChange refChange = new MockRefChange();
+        refChange.setFromHash("0000000000000000000000000000000000000000");
+        refChange.setToHash("35d938b060bb361503e021f228e43351f1a71551");
+        refChange.setRefId("refs/heads/master");
+        refChange.setType(RefChangeType.ADD);
         return refChange;
     }
 
-    private RefChange mockRefChange() {
-        RefChange refChange = mock(RefChange.class);
-        when(refChange.getFromHash()).thenReturn("5773fc438a763e64df8a9c5c32f3b1e83010ada7");
-        when(refChange.getToHash()).thenReturn("35d938b060bb361503e021f228e43351f1a71551");
-        when(refChange.getRefId()).thenReturn("refs/heads/master");
-        when(refChange.getType()).thenReturn(RefChangeType.UPDATE);
+    private MockRefChange mockRefChange() {
+        MockRefChange refChange = new MockRefChange();
+        refChange.setFromHash("5773fc438a763e64df8a9c5c32f3b1e83010ada7");
+        refChange.setToHash("35d938b060bb361503e021f228e43351f1a71551");
+        refChange.setRefId("refs/heads/master");
+        refChange.setType(RefChangeType.UPDATE);
         return refChange;
     }
 
-    private RefChange mockTagChange() {
-        RefChange refChange = mock(RefChange.class);
-        when(refChange.getFromHash()).thenReturn("0000000000000000000000000000000000000000");
-        when(refChange.getToHash()).thenReturn("35d938b060bb361503e021f228e43351f1a71551");
-        when(refChange.getRefId()).thenReturn("refs/tags/tag");
-        when(refChange.getType()).thenReturn(RefChangeType.ADD);
+    private MockRefChange mockTagChange() {
+        MockRefChange refChange = new MockRefChange();
+        refChange.setFromHash("0000000000000000000000000000000000000000");
+        refChange.setToHash("35d938b060bb361503e021f228e43351f1a71551");
+        refChange.setRefId("refs/tags/tag");
+        refChange.setType(RefChangeType.ADD);
         return refChange;
     }
 }

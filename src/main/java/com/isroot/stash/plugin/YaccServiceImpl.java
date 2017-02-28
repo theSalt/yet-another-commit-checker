@@ -44,16 +44,16 @@ public class YaccServiceImpl implements YaccService {
 
     @Override
     public List<YaccError> checkRefChange(Repository repository, Settings settings, RefChange refChange) {
-        boolean isTag = refChange.getRefId().startsWith(GitRefPattern.TAGS.getPath());
+        boolean isTag = refChange.getRef().getId().startsWith(GitRefPattern.TAGS.getPath());
 
         List<YaccError> errors = Lists.newArrayList();
 
         if (refChange.getType() == RefChangeType.ADD) {
-            errors.addAll(new BranchNameCheck(settings, refChange.getRefId()).check());
+            errors.addAll(new BranchNameCheck(settings, refChange.getRef().getId()).check());
         }
 
         Set<YaccCommit> commits = commitsService.getNewCommits(repository, refChange);
-        String branchName = refChange.getRefId().replace(GitRefPattern.HEADS.getPath(), "");
+        String branchName = refChange.getRef().getId().replace(GitRefPattern.HEADS.getPath(), "");
         
         for (YaccCommit commit : commits) {
             for(YaccError e : checkCommit(settings, commit, !isTag, branchName)) {

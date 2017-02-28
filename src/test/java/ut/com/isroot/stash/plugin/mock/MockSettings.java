@@ -1,7 +1,7 @@
 package ut.com.isroot.stash.plugin.mock;
 
 import com.atlassian.bitbucket.setting.Settings;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 
 import javax.annotation.Nonnull;
@@ -36,7 +36,7 @@ public class MockSettings implements Settings {
     @Nonnull
     @Override
     public String getString(String key, String defaultValue) {
-        return Objects.firstNonNull(getString(key), defaultValue);
+        return MoreObjects.firstNonNull(getString(key), defaultValue);
     }
 
     @Nullable

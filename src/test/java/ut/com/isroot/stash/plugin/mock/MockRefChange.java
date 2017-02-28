@@ -52,8 +52,14 @@ public class MockRefChange implements RefChange {
 
     @Nonnull
     @Override
+    @Deprecated
     public String getRefId() {
         return refId;
+    }
+
+    public MockRefChange setRefId(String refId) {
+        this.refId = refId;
+        return this;
     }
 
     @Nonnull
@@ -62,10 +68,20 @@ public class MockRefChange implements RefChange {
         return fromHash;
     }
 
+    public MockRefChange setFromHash(String fromHash) {
+        this.fromHash = fromHash;
+        return this;
+    }
+
     @Nonnull
     @Override
     public String getToHash() {
         return toHash;
+    }
+
+    public MockRefChange setToHash(String toHash) {
+        this.toHash = toHash;
+        return this;
     }
 
     @Nonnull
@@ -74,19 +90,8 @@ public class MockRefChange implements RefChange {
         return type;
     }
 
-    public void setRefId(String refId) {
-        this.refId = refId;
-    }
-
-    public void setFromHash(String fromHash) {
-        this.fromHash = fromHash;
-    }
-
-    public void setToHash(String toHash) {
-        this.toHash = toHash;
-    }
-
-    public void setType(RefChangeType type) {
+    public MockRefChange setType(RefChangeType type) {
         this.type = type;
+        return this;
     }
 }

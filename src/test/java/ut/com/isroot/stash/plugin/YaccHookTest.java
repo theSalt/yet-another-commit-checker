@@ -54,8 +54,8 @@ public class YaccHookTest {
 
     @Test
     public void testOnReceive_deleteRefChangesIgnored() {
-        RefChange refChange = mock(RefChange.class);
-        when(refChange.getType()).thenReturn(RefChangeType.DELETE);
+        RefChange refChange = new MockRefChange()
+                .setType(RefChangeType.DELETE);
 
         boolean allowed = yaccHook.onReceive(repositoryHookContext, Lists.newArrayList(refChange), null);
         assertThat(allowed).isTrue();
@@ -64,9 +64,9 @@ public class YaccHookTest {
 
     @Test
     public void testOnReceive_NullRefChangesIgnored() {
-        RefChange refChange = mock(RefChange.class);
-        when(refChange.getType()).thenReturn(RefChangeType.ADD);
-        when(refChange.getToHash()).thenReturn("0000000000000000000000000000000000000000");
+        RefChange refChange = new MockRefChange()
+                .setType(RefChangeType.ADD)
+                .setToHash("0000000000000000000000000000000000000000");
 
         boolean allowed = yaccHook.onReceive(repositoryHookContext, Lists.newArrayList(refChange), null);
         assertThat(allowed).isTrue();
