@@ -119,7 +119,12 @@ public class YaccServiceImpl implements YaccService {
             String excludeUsers = settings.getString("excludeUsers");
             if (excludeUsers != null) {
                 List<String> excludedUsers = Arrays.asList((excludeUsers.split(","))).stream().map(i -> i.trim()).collect(Collectors.toList());
+
+                log.debug("checking exclude users setting for user {}: {}", stashUser.getName(),
+                        excludedUsers);
+
                 if (excludedUsers.contains(stashUser.getName())) {
+                    log.debug("commit excluded due to exclude users setting");
                     return true;
                 }
             }
