@@ -137,6 +137,11 @@ If present, commits will be excluded from all requirements except matching commi
 If enabled, commits from service users (ie, using [SSH Access Keys](https://confluence.atlassian.com/bitbucketserver/ssh-access-keys-for-system-use-776639781.html))
 will be excluded from commit requirements.
 
+##### Exclude Commits From Users
+ 
+Comma delimited list of BitBucket User Names. Commits from these users will be
+excluded from commit requirements.
+
 ## FAQ
 
 #### I am getting a JIRA authentication failed message when attempting to push my code or when trying to configure an issue JQL matcher.
