@@ -1,5 +1,9 @@
 # YACC Changelog
 
+### 1.15-SNAPSHOT (UNRELEASED)
+
+* Feature: Exclude commits by BitBucket user name. Thanks [@christiangalsterer](https://github.com/christiangalsterer)! 
+
 ### 1.14 (2017-03-13)
 
 * Bugfix: Fixed JIRA JQL validation errors when project key is a JIRA JQL keyword. Thanks [@rc-ck](https://github.com/rc-ck)! 
