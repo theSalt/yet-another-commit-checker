@@ -194,4 +194,12 @@
     {param descriptionText: 'Exclude commits from service users with access keys (e.g. CI Server) from commit requirements.' /}
   {/call}
 
+  {call aui.form.textField}
+  		{param id: 'excludeUsers' /}
+  		{param labelContent: 'Exclude User Commits' /}
+  		{param value: $config['excludeUsers'] /}
+  		{param descriptionText: 'Exclude commits from users. Separate multiple user names with a comma.' /}
+  		{param errorTexts: $errors ? $errors['excludeUsers'] : null /}
+  {/call}
+
 {/template}

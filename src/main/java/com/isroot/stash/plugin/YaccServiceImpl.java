@@ -16,10 +16,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
@@ -110,6 +112,17 @@ public class YaccServiceImpl implements YaccService {
         ApplicationUser stashUser = stashAuthenticationContext.getCurrentUser();
         if (settings.getBoolean("excludeServiceUserCommits", false) && stashUser.getType() == UserType.SERVICE) {
             return true;
+        }
+
+        // Exclude by User setting
+        if (stashUser.getType() == UserType.NORMAL) {
+            String excludeUsers = settings.getString("excludeUsers");
+            if (excludeUsers != null) {
+                List<String> excludedUsers = Arrays.asList((excludeUsers.split(","))).stream().map(i -> i.trim()).collect(Collectors.toList());
+                if (excludedUsers.contains(stashUser.getName())) {
+                    return true;
+                }
+            }
         }
 
         // Exclude by Regex setting

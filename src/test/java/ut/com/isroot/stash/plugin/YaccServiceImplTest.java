@@ -503,6 +503,23 @@ public class YaccServiceImplTest {
     }
 
     @Test
+    public void testCheckRefChange_excludeUserCommitsWithInvalidCommitMessage() {
+        when(settings.getString("commitMessageRegex")).thenReturn("[a-z ]+");
+        when(settings.getString("excludeUsers")).thenReturn("excludeUser, nonExcludeUser");
+
+        when(stashUser.getType()).thenReturn(UserType.NORMAL);
+        when(stashUser.getName()).thenReturn("excludeUser");
+
+        YaccCommit commit = mockCommit();
+        when(commit.getMessage()).thenReturn("123 does not match regex because it contains numbers");
+        when(commitsService.getNewCommits(any(Repository.class), any(RefChange.class))).thenReturn(Sets.newHashSet(commit));
+
+        List<YaccError> errors = yaccService.checkRefChange(null, settings, mockRefChange());
+        assertThat(errors).isEmpty();
+        verify(settings).getString("excludeUsers");
+    }
+
+    @Test
     public void testCheckRefChange_branchNameRegex_branchRejectedIfDoesNotMatchRegex() {
         when(settings.getString("branchNameRegex")).thenReturn("foo");
 
