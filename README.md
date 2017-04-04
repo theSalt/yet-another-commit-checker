@@ -49,11 +49,11 @@ Global settings will apply to all repositories that don't have YACC enabled per-
 
 ### Supported Configuration Settings
 
-####Require Matching Committer Email
+#### Require Matching Committer Email
 
 If enabled, committer email must match the email of the Bitbucket Server user.
 
-####Require Matching Committer Name
+#### Require Matching Committer Name
 
 If enabled, committer name must match the name of the Bitbucket Server user.
 
@@ -61,7 +61,7 @@ If enabled, committer name must match the name of the Bitbucket Server user.
 
 If a regex is present, the committer email must match regex.
 
-####Commit Message Regex
+#### Commit Message Regex
 
 If a regex is present, commit message must match regex.
 
@@ -73,11 +73,11 @@ will require commit message to be in the form of:
 
     PROJ-123: added new feature xyz
 
-#####Multi-line Commit Messages
+##### Multi-line Commit Messages
 
 Multi-line commit messages can be matched by including newlines into the regex (like `(.|\n)*`), or by enabling Pattern.DOTALL using the `(?s)` embedded flag expression. 
 
-####Require Valid JIRA Issue(s)
+#### Require Valid JIRA Issue(s)
 
 If enabled, commit messages must contain valid JIRA issue ids. JIRA issue ids are defined as any item that matches
 the regex `[A-Z][A-Z_0-9]+-[0-9]+`.
@@ -86,7 +86,7 @@ This check requires JIRA to be first linked with Bitbucket Server using an [Appl
 
 *Note:* This may result in false positives if commit messages contains strings that look like JIRA issue, for example, "UTF-8". Enable `Ignore Unknown JIRA Project Keys` to tell YACC to ignore items that don't contain a valid JIRA Project key.
 
-#####Locating Issues Using a Regex Group
+##### Locating Issues Using a Regex Group
 
 If a regex group is present in the `Commit Message Regex`, only text contained within this group will be examined when extracting JIRA issues.
 
@@ -96,11 +96,11 @@ For example, a `([A-Z0-9\-]+): .*` commit message regex will mean only `PROJ-123
 
 UTF-8 and HIGH-5 will be ignored because they are not contained within the regex group. Using a regex group can be used as an alternative to `Ignore Unknown JIRA Project Keys` to deal with issue false positives, especially when you want to detect project key typos.
 
-####Ignore Unknown JIRA Project Keys
+#### Ignore Unknown JIRA Project Keys
 
 If enabled, any issue-like items in commit messages that do not contain a valid JIRA project key (such as "UTF-8") will be ignored.
 
-####Issue JQL Matcher
+#### Issue JQL Matcher
 
 If JQL query is present, detected JIRA issues must match this query.
 
@@ -113,7 +113,7 @@ will require that JIRA issues be assigned, in progess, and from project PROJ.
 See [JIRA Advanced Searching](https://confluence.atlassian.com/display/JIRA/Advanced+Searching) for documentation regarding writing and testing
 JQL queries.
 
-####Branch Name Regex
+#### Branch Name Regex
 
 If present, only branches with names that match this regex will be allowed to be created. This also
 affects branches created within the Bitbucket Server UI. This only affects _new_ branches, existing
@@ -122,17 +122,17 @@ branches that don't match this regex will still be allowed.
 For example, `master|(?:(?:bugfix|hotfix|feature)/[A-Z]+-\d+-.+)` would enforce that branch names
 follow the Bitbucket Server Branching Model naming convention.
 
-####Exclude Merge Commits
+#### Exclude Merge Commits
 
 If enabled, merge commits will be excluded from commit requirements.
 
-####Exclude by Regex
+#### Exclude by Regex
 
 If present, commits will be excluded from all requirements except matching committer email/name if part of the commit message matches this regex.
 
 *Example:* `^Revert \"|#skipchecks`
 
-####Exclude Service User Commits
+#### Exclude Service User Commits
 
 If enabled, commits from service users (ie, using [SSH Access Keys](https://confluence.atlassian.com/bitbucketserver/ssh-access-keys-for-system-use-776639781.html))
 will be excluded from commit requirements.
