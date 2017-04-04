@@ -1,6 +1,6 @@
 # YACC Changelog
 
-### 1.15-SNAPSHOT (UNRELEASED)
+### 1.15 (2017-04-03)
 
 * Feature: Exclude commits by BitBucket user name. Thanks [@christiangalsterer](https://github.com/christiangalsterer)! 
 
