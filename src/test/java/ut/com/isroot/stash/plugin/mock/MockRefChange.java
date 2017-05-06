@@ -51,7 +51,6 @@ public class MockRefChange implements RefChange {
     }
 
     @Nonnull
-    @Override
     @Deprecated
     public String getRefId() {
         return refId;

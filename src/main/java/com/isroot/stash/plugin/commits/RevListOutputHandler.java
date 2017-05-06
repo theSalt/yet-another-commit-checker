@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class RevListOutputHandler extends LineReaderOutputHandler
     private List<YaccCommit> commits = new ArrayList<>();
 
     public RevListOutputHandler() {
-        super("UTF-8");
+        super(StandardCharsets.UTF_8);
     }
 
     @Nullable

@@ -68,7 +68,7 @@ public class YaccPreReceiveHook implements PreReceiveHook {
             log.debug("global settings: {}", storedConfig.asMap());
 
             if(areThereEnabledSettings(storedConfig.asMap())) {
-                return yaccHook.onReceive(new RepositoryHookContext(repository, storedConfig), refChanges, hookResponse);
+                return yaccHook.onReceive(new HookContext(repository, storedConfig), refChanges, hookResponse);
             } else {
                 log.debug("no need to run yacc because no global settings configured");
 
@@ -107,5 +107,11 @@ public class YaccPreReceiveHook implements PreReceiveHook {
         }
 
         return false;
+    }
+
+    private static class HookContext extends RepositoryHookContext {
+        public HookContext(@Nonnull Repository repository, @Nonnull Settings settings) {
+            super(repository, settings);
+        }
     }
 }
