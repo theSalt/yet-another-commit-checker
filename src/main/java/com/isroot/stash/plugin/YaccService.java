@@ -14,4 +14,7 @@ import java.util.List;
 public interface YaccService {
     List<YaccError> checkRefChange(Repository repository, Settings settings,
             RefChange refChange);
+
+    List<YaccError> checkCommit(Settings settings, YaccCommit commit, boolean checkMessages,
+            String branchName);
 }

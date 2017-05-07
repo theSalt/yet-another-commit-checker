@@ -1,5 +1,6 @@
 package com.isroot.stash.plugin;
 
+import com.atlassian.bitbucket.commit.Commit;
 import com.atlassian.bitbucket.user.SimplePerson;
 
 /**
@@ -10,6 +11,14 @@ public class YaccCommit {
     private final SimplePerson committer;
     private final String message;
     private final boolean isMerge;
+
+    public YaccCommit(Commit commit) {
+        this.id = commit.getId();
+        this.committer = new SimplePerson(commit.getCommitter().getName(),
+                commit.getCommitter().getEmailAddress());
+        this.message = commit.getMessage();
+        this.isMerge = commit.getParents().size() > 1;
+    }
 
     /**
      * Construct a new commit instance.

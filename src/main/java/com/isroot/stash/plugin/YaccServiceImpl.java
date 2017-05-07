@@ -66,7 +66,8 @@ public class YaccServiceImpl implements YaccService {
         return errors;
     }
 
-    private List<YaccError> checkCommit(Settings settings, YaccCommit commit, boolean checkMessages, String branchName) {
+    public List<YaccError> checkCommit(Settings settings, YaccCommit commit, boolean checkMessages,
+            String branchName) {
         log.debug("checking commit id={} name={} email={} message={}", commit.getId(),
                 commit.getCommitter().getName(), commit.getCommitter().getEmailAddress(),
                 commit.getMessage());
