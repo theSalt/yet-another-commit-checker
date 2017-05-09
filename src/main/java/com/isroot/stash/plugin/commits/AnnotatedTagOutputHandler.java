@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,7 +26,7 @@ public class AnnotatedTagOutputHandler extends LineReaderOutputHandler
     private YaccCommit yaccCommit = null;
 
     public AnnotatedTagOutputHandler(String ref) {
-        super("UTF-8");
+        super(StandardCharsets.UTF_8);
         this.ref = ref;
     }
 
