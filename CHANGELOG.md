@@ -1,5 +1,9 @@
 # YACC Changelog
 
+### 1.16 (2017-05-08)
+
+* Feature: Support for Bitbucket Server 5!
+
 ### 1.15 (2017-04-03)
 
 * Feature: Exclude commits by BitBucket user name. Thanks [@christiangalsterer](https://github.com/christiangalsterer)! 
