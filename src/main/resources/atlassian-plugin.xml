@@ -68,8 +68,9 @@
 
     <component-import key="soyTemplateRenderer" interface="com.atlassian.soy.renderer.SoyTemplateRenderer"/>
 
-    <pre-receive-hook key="yaccPreReceiveHook" name="Yet Another Commit Checker"
-                      class="com.isroot.stash.plugin.YaccPreReceiveHook">
+    <repository-hook key="yaccGlobalHook" name="Yet Another Commit Checker"
+                     class="com.isroot.stash.plugin.YaccPreReceiveHook"
+                     configurable="false">
         <description>Yet Another Commit Checker global pre-receive hook configuration. Is overridden by repository hook
             configurations.
         </description>
@@ -78,7 +79,7 @@
             <directory location="/static/"/>
         </config-form>
         <validator>com.isroot.stash.plugin.ConfigValidator</validator>
-    </pre-receive-hook>
+    </repository-hook>
 
     <!-- Makes PluginSettingsFactory available to the plugin to allow the global settings to be set. -->
     <component-import key="pluginSettingsFactory" interface="com.atlassian.sal.api.pluginsettings.PluginSettingsFactory" />
