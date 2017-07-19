@@ -38,6 +38,12 @@ class YaccHookCommitCallback implements PreRepositoryHookCommitCallback {
         log.debug("yacc commit callback, ref={} commit={}", commitDetails.getRef().getId(),
                 commitDetails.getCommit().getId());
 
+        if(commitDetails.getRef().getId().startsWith("refs/notes/")) {
+            log.debug("git notes ref, skipping");
+
+            return true;
+        }
+
         YaccCommit yaccCommit = new YaccCommit(commitDetails.getCommit());
 
         String branchName = commitDetails.getRef().getId()
