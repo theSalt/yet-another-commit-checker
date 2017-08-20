@@ -68,7 +68,7 @@ class YaccHookCommitCallback implements PreRepositoryHookCommitCallback {
             YaccErrorBuilder errorBuilder = new YaccErrorBuilder(settings);
             String message = errorBuilder.getErrorMessage(errors);
 
-            result = RepositoryHookResult.rejected("Commit rejected by YACC", message);
+            result = RepositoryHookResult.rejected("Push rejected by YACC", message);
         }
     }
 
