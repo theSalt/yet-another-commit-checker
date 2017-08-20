@@ -1,6 +1,7 @@
 package com.isroot.stash.plugin;
 
 import com.atlassian.bitbucket.commit.Commit;
+import com.atlassian.bitbucket.user.Person;
 import com.atlassian.bitbucket.user.SimplePerson;
 
 /**
@@ -8,7 +9,7 @@ import com.atlassian.bitbucket.user.SimplePerson;
  */
 public class YaccCommit {
     private final String id;
-    private final SimplePerson committer;
+    private final Person committer;
     private final String message;
     private final boolean isMerge;
 
@@ -63,7 +64,7 @@ public class YaccCommit {
      *
      * @return Git committer identity.
      */
-    public SimplePerson getCommitter() {
+    public Person getCommitter() {
         return committer;
     }
 
