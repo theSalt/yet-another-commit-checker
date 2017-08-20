@@ -68,9 +68,9 @@ public class YaccServiceImpl implements YaccService {
 
     public List<YaccError> checkCommit(Settings settings, YaccCommit commit, boolean checkMessages,
             String branchName) {
-        log.debug("checking commit id={} name={} email={} message={}", commit.getId(),
+        log.debug("checking commit id={} name={} email={} message={} branchName={}", commit.getId(),
                 commit.getCommitter().getName(), commit.getCommitter().getEmailAddress(),
-                commit.getMessage());
+                commit.getMessage(), branchName);
 
         List<YaccError> errors = Lists.newArrayList();
 
@@ -148,6 +148,9 @@ public class YaccServiceImpl implements YaccService {
     private boolean isBranchExcluded(Settings settings, String branchName) {
         // Exclude by Regex setting
         String excludeBranchRegex = settings.getString("excludeBranchRegex");
+
+        log.debug("branch check, excludeBranchRegex={} branchName={}", excludeBranchRegex,
+                branchName);
 
         if(excludeBranchRegex != null && !excludeBranchRegex.isEmpty()) {
             Pattern pattern = Pattern.compile(excludeBranchRegex);

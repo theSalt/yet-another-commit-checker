@@ -3,7 +3,6 @@ package com.isroot.stash.plugin;
 import com.atlassian.bitbucket.hook.repository.CommitAddedDetails;
 import com.atlassian.bitbucket.hook.repository.PreRepositoryHookCommitCallback;
 import com.atlassian.bitbucket.hook.repository.RepositoryHookResult;
-import com.atlassian.bitbucket.scm.git.GitRefPattern;
 import com.atlassian.bitbucket.setting.Settings;
 import com.isroot.stash.plugin.errors.YaccError;
 import com.isroot.stash.plugin.errors.YaccErrorBuilder;
@@ -46,8 +45,7 @@ class YaccHookCommitCallback implements PreRepositoryHookCommitCallback {
 
         YaccCommit yaccCommit = new YaccCommit(commitDetails.getCommit());
 
-        String branchName = commitDetails.getRef().getId()
-                .replace(GitRefPattern.HEADS.getPath(), "");
+        String branchName = commitDetails.getRef().getDisplayId();
 
         List<YaccError> commitErrors = yaccService.checkCommit(settings, yaccCommit, true,
                 branchName);
