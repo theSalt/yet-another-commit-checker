@@ -1,16 +1,19 @@
 package it.com.isroot.stash.plugin;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+import com.atlassian.pageobjects.TestedProductFactory;
+import com.atlassian.webdriver.bitbucket.BitbucketTestedProduct;
+import com.atlassian.webdriver.bitbucket.page.BitbucketLoginPage;
+import com.atlassian.webdriver.testing.rule.WebDriverScreenshotRule;
+import it.com.isroot.stash.plugin.pageobjects.YaccGlobalSettingsPage;
+import it.com.isroot.stash.plugin.pageobjects.YaccRepoSettingsPage;
+import it.com.isroot.stash.plugin.pageobjects.YaccSettingsCommon;
+import it.com.isroot.stash.plugin.util.YaccTestUtils;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
-import com.atlassian.pageobjects.TestedProductFactory;
-import com.atlassian.webdriver.bitbucket.BitbucketTestedProduct;
-import com.atlassian.webdriver.bitbucket.page.BitbucketLoginPage;
-import com.atlassian.webdriver.testing.rule.WebDriverScreenshotRule;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration test to verify that both the YACC global and repo settings page are in sync and both working.
