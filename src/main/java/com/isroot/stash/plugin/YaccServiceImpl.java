@@ -148,10 +148,13 @@ public class YaccServiceImpl implements YaccService {
         // Exclude by Regex setting
         String excludeBranchRegex = settings.getString("excludeBranchRegex");
 
+        log.debug("branchName={}, excludeBranchRegex={}", branchName, excludeBranchRegex);
+
         if(excludeBranchRegex != null && !excludeBranchRegex.isEmpty()) {
             Pattern pattern = Pattern.compile(excludeBranchRegex);
             Matcher matcher = pattern.matcher(branchName);
             if(matcher.matches()) {
+                log.debug("branch is excluded");
                 return true;
             }
         }
