@@ -2,6 +2,7 @@ package it.com.isroot.stash.plugin.util;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -42,6 +43,10 @@ public class GitRepo {
         return git;
     }
 
+    public PushResult push() {
+        return push("master");
+    }
+
     public PushResult push(String ref) {
         try {
             log.info("pushing repo dir: {}", git.getRepository().getDirectory());
@@ -59,7 +64,7 @@ public class GitRepo {
         }
     }
 
-    public void commitFile(String fileName, String commitMessage) {
+    public void addFile(String fileName) {
         try {
             Path file = git.getRepository().getDirectory().getParentFile()
                     .toPath().resolve(fileName);
@@ -68,14 +73,30 @@ public class GitRepo {
             git.add()
                     .addFilepattern(fileName)
                     .call();
-
-            git.commit()
-                    .setMessage(commitMessage)
-                    .call();
-        } catch(IOException|GitAPIException e) {
+        } catch (IOException | GitAPIException e) {
             throw new RuntimeException(e);
         }
 
+    }
+
+    public GitRepo commitFile(String fileName, String commitMessage) {
+        commitFile(fileName, commitMessage, new PersonIdent("YaccName", "yacc@email.com"));
+        return this;
+    }
+
+    public GitRepo commitFile(String fileName, String commitMessage, PersonIdent committer) {
+        try {
+            addFile(fileName);
+
+            git.commit()
+                    .setMessage(commitMessage)
+                    .setCommitter(committer)
+                    .call();
+        } catch (GitAPIException e) {
+            throw new RuntimeException(e);
+        }
+
+        return this;
     }
 
     private CredentialsProvider getCredentialsProvider() {

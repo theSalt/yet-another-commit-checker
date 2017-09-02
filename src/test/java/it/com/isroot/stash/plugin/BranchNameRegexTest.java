@@ -43,10 +43,8 @@ public class BranchNameRegexTest {
 
         PushResult pushResult = gitRepoRule.getGitRepo().push("invalid-name");
 
-        for (RemoteRefUpdate update : pushResult.getRemoteUpdates()) {
-            assertThat(update.getStatus())
-                    .isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
-        }
+        assertThat(pushResult.getRemoteUpdates()).extracting(RemoteRefUpdate::getStatus)
+                .containsExactly(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
 
         assertThat(pushResult.getMessages())
                 .contains("refs/heads/invalid-name: Invalid branch name. 'invalid-name' " +
@@ -67,10 +65,8 @@ public class BranchNameRegexTest {
 
         PushResult pushResult = gitRepoRule.getGitRepo().push("feature/correct-branch-name");
 
-        for (RemoteRefUpdate update : pushResult.getRemoteUpdates()) {
-            assertThat(update.getStatus())
-                    .isEqualTo(RemoteRefUpdate.Status.OK);
-        }
+        assertThat(pushResult.getRemoteUpdates()).extracting(RemoteRefUpdate::getStatus)
+                .containsExactly(RemoteRefUpdate.Status.OK);
 
         assertThat(pushResult.getMessages())
                 .contains("Create pull request");
@@ -89,19 +85,15 @@ public class BranchNameRegexTest {
 
         PushResult pushResult = gitRepoRule.getGitRepo().push("invalid-name");
 
-        for (RemoteRefUpdate update : pushResult.getRemoteUpdates()) {
-            assertThat(update.getStatus())
-                    .isEqualTo(RemoteRefUpdate.Status.OK);
-        }
+        assertThat(pushResult.getRemoteUpdates()).extracting(RemoteRefUpdate::getStatus)
+                .containsExactly(RemoteRefUpdate.Status.OK);
 
         gitRepoRule.enableYaccRepoHook();
 
         gitRepoRule.getGitRepo().commitFile("newfile", "commit will be allowed");
         gitRepoRule.getGitRepo().push("invalid-name");
 
-        for (RemoteRefUpdate update : pushResult.getRemoteUpdates()) {
-            assertThat(update.getStatus())
-                    .isEqualTo(RemoteRefUpdate.Status.OK);
-        }
+        assertThat(pushResult.getRemoteUpdates()).extracting(RemoteRefUpdate::getStatus)
+                .containsExactly(RemoteRefUpdate.Status.OK);
     }
 }

@@ -2,6 +2,7 @@ package it.com.isroot.stash.plugin;
 
 import com.google.common.collect.ImmutableMap;
 import it.com.isroot.stash.plugin.util.YaccRule;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.Before;
@@ -14,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Sean Ford
  * @since 2017-09-02
  */
-public class CommitRegexTest {
+public class CommitterEmailTest {
     @Rule
     public YaccRule gitRepoRule = new YaccRule();
 
@@ -22,13 +23,13 @@ public class CommitRegexTest {
     public void setup() {
         gitRepoRule.enableYaccRepoHook();
         gitRepoRule.configureYaccRepoHook(ImmutableMap
-                .of("commitMessageRegex", "[A-Z]+-[0-9]+: .*"));
+                .of("requireMatchingAuthorEmail", "true"));
     }
 
     @Test
-    public void testCommitRegex_allowed() {
-        PushResult pushResult =  gitRepoRule.getGitRepo()
-                .commitFile("file.java", "ABC-123: allowed")
+    public void testCommitRegex_allowed() throws Exception {
+        PushResult pushResult = gitRepoRule.getGitRepo()
+                .commitFile("someFile", "message", new PersonIdent("Admin", "admin@example.com"))
                 .push();
 
         assertThat(pushResult.getRemoteUpdates()).extracting(RemoteRefUpdate::getStatus)
@@ -37,14 +38,14 @@ public class CommitRegexTest {
 
     @Test
     public void testCommitRegex_blocked() {
-        PushResult pushResult = gitRepoRule.getGitRepo().commitFile("file.java", "invalid commit message")
+        PushResult pushResult = gitRepoRule.getGitRepo().commitFile("file.java", "commit message")
                 .push();
-        
+
         assertThat(pushResult.getRemoteUpdates()).extracting(RemoteRefUpdate::getStatus)
                 .containsExactly(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
 
         assertThat(pushResult.getMessages())
-                .contains("commit message doesn't match regex:");
+                .contains("expected committer email 'admin@example.com' but found 'yacc@email.com'");
     }
 
 }
