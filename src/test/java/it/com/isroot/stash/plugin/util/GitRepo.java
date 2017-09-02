@@ -16,15 +16,15 @@ import java.nio.file.Path;
  * @author Sean Ford
  * @since 2017-08-20
  */
-public class TestRepository {
-    private static final Logger log = LoggerFactory.getLogger(TestRepository.class);
+public class GitRepo {
+    private static final Logger log = LoggerFactory.getLogger(GitRepo.class);
 
     private final static String USER = "admin";
     private final static String PASSWORD = "admin";
 
     private final Git git;
 
-    public TestRepository(Path location, String slug) {
+    public GitRepo(Path location, String slug) {
         try {
             git = Git.cloneRepository()
                     .setDirectory(location.toFile())
