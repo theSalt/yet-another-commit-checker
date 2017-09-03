@@ -9,6 +9,7 @@ import it.com.isroot.stash.plugin.pageobjects.YaccRepoSettingsPage;
 import it.com.isroot.stash.plugin.pageobjects.YaccSettingsCommon;
 import it.com.isroot.stash.plugin.util.YaccTestUtils;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,6 +32,11 @@ public class SettingsTest {
     @BeforeClass
     public static void setup() {
         YaccTestUtils.waitForStashToBoot(STASH.getTester());
+        YaccTestUtils.resetData(STASH);
+    }
+
+    @AfterClass
+    public static void resetSettings() {
         YaccTestUtils.resetData(STASH);
     }
 
