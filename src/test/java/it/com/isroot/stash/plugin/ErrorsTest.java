@@ -8,6 +8,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -81,6 +84,42 @@ public class ErrorsTest {
                 .startsWith("custom header\n" +
                         "\n" +
                         "refs/heads/master:");
+    }
+
+    @Test
+    public void testCustomizedErrorMessages() {
+        Map<String, String> settings = new HashMap<>();
+        settings.put("commitMessageRegex", "[A-Z]+-[0-9]+: .*");
+        settings.put("requireMatchingAuthorEmail", "true");
+        settings.put("requireMatchingAuthorName", "true");
+        settings.put("committerEmailRegex", "foo");
+        settings.put("errorMessage.COMMIT_REGEX", "message is wrong");
+        settings.put("errorMessage.COMMITTER_EMAIL", "email is wrong");
+        settings.put("errorMessage.COMMITTER_NAME", "name is wrong");
+        settings.put("errorMessage.COMMITTER_EMAIL_REGEX", "email domain is wrong");
+
+        gitRepoRule.configureYaccRepoHook(settings);
+
+        PushResult pushResult = gitRepoRule.getGitRepo()
+                .commitFile("file.java", "will be blocked")
+                .push();
+
+        assertThat(pushResult.getRemoteUpdates()).extracting(RemoteRefUpdate::getStatus)
+                .containsExactly(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+
+        assertThat(pushResult.getMessages())
+                .contains("'yacc@email.com'\n" +
+                        "\n" +
+                        "    email is wrong")
+                .contains("found 'YaccName'\n" +
+                        "\n" +
+                        "    name is wrong")
+                .contains("[A-Z]+-[0-9]+: .*\n" +
+                        "\n" +
+                        "    message is wrong")
+                .contains("user email 'yacc@email.com'\n" +
+                        "\n" +
+                        "    email domain is wrong");
     }
 
     @Test
