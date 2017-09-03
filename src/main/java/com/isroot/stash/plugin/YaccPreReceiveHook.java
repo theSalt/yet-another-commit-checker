@@ -1,9 +1,7 @@
 package com.isroot.stash.plugin;
 
-import com.atlassian.bitbucket.hook.repository.PreRepositoryHook;
 import com.atlassian.bitbucket.hook.repository.PreRepositoryHookContext;
 import com.atlassian.bitbucket.hook.repository.RepositoryHook;
-import com.atlassian.bitbucket.hook.repository.RepositoryHookCommitFilter;
 import com.atlassian.bitbucket.hook.repository.RepositoryHookResult;
 import com.atlassian.bitbucket.hook.repository.RepositoryHookService;
 import com.atlassian.bitbucket.hook.repository.RepositoryPushHookRequest;
@@ -25,11 +23,10 @@ import java.util.Map;
  * @author Uldis Ansmits
  * @author Jim Bethancourt
  */
-public class YaccPreReceiveHook implements PreRepositoryHook<RepositoryPushHookRequest> {
+public class YaccPreReceiveHook extends YaccHook {
 
     private static final Logger log = LoggerFactory.getLogger(YaccPreReceiveHook.class);
 
-    private final YaccService yaccService;
     private final PluginSettingsFactory pluginSettingsFactory;
     private final SecurityService securityService;
     private final RepositoryHookService repositoryHookService;
@@ -38,7 +35,7 @@ public class YaccPreReceiveHook implements PreRepositoryHook<RepositoryPushHookR
                               PluginSettingsFactory pluginSettingsFactory,
                               SecurityService securityService,
                               RepositoryHookService repositoryHookService) {
-        this.yaccService = yaccService;
+        super(yaccService);
         this.pluginSettingsFactory = pluginSettingsFactory;
         this.securityService = securityService;
         this.repositoryHookService = repositoryHookService;
@@ -65,9 +62,7 @@ public class YaccPreReceiveHook implements PreRepositoryHook<RepositoryPushHookR
             log.debug("global settings: {}", storedConfig.asMap());
 
             if(areThereEnabledSettings(storedConfig.asMap())) {
-                context.registerCommitCallback(
-                        new YaccHookCommitCallback(yaccService, storedConfig),
-                        RepositoryHookCommitFilter.ADDED_TO_REPOSITORY);
+                return check(context, repositoryPushHookRequest, storedConfig);
             } else {
                 log.debug("no need to run yacc because no global settings configured");
             }

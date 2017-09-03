@@ -96,4 +96,32 @@ public class BranchNameRegexTest {
         assertThat(pushResult.getRemoteUpdates()).extracting(RemoteRefUpdate::getStatus)
                 .containsExactly(RemoteRefUpdate.Status.OK);
     }
+
+    /**
+     * Due to the way commit callback works in BBS 5 APIs, commit checks won't be ran if branch
+     * name regex fails. So, it will be the only error. The rest of the checks will be ran once
+     * branch name is fixed.
+     */
+    @Test
+    public void testOtherChecksAreNotRanIfBranchNameRegexFails() throws Exception {
+        Git git = gitRepoRule.getGitRepo().getGit();
+
+        gitRepoRule.enableYaccRepoHook();
+        gitRepoRule.configureYaccRepoHook(ImmutableMap
+                .of("branchNameRegex", "master|feature/.*",
+                        "commitMessageRegex", "commit_regex"));
+
+        git.branchCreate()
+                .setName("invalid-name")
+                .call();
+
+        PushResult pushResult = gitRepoRule.getGitRepo().push("invalid-name");
+
+        assertThat(pushResult.getRemoteUpdates()).extracting(RemoteRefUpdate::getStatus)
+                .containsExactly(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+
+        assertThat(pushResult.getMessages())
+                .contains("Invalid branch name")
+                .doesNotContain("commit_regex");
+    }
 }

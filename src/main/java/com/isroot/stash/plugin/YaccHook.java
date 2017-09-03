@@ -23,7 +23,7 @@ import java.util.List;
  * @author Sean Ford
  * @since 2013-05-11
  */
-public final class YaccHook implements PreRepositoryHook<RepositoryPushHookRequest> {
+public class YaccHook implements PreRepositoryHook<RepositoryPushHookRequest> {
     private static final Logger log = LoggerFactory.getLogger(YaccHook.class);
 
     private final YaccService yaccService;
@@ -37,11 +37,17 @@ public final class YaccHook implements PreRepositoryHook<RepositoryPushHookReque
     public RepositoryHookResult preUpdate(
             @Nonnull PreRepositoryHookContext context,
             @Nonnull RepositoryPushHookRequest repositoryPushHookRequest) {
-        log.debug("YaccHook preUpdate, registering commit callback");
-
         final Settings settings = context.getSettings();
-        
+
         log.debug("yacc settings: {}", settings.asMap());
+
+        return check(context, repositoryPushHookRequest, settings);
+
+    }
+
+    public RepositoryHookResult check(PreRepositoryHookContext context,
+            RepositoryPushHookRequest repositoryPushHookRequest, Settings settings) {
+        log.debug("YaccHook preUpdate, registering commit callback. settings={}", settings);
 
         List<YaccError> errors = checkRefs(settings, repositoryPushHookRequest.getRefChanges());
         if (!errors.isEmpty()) {
@@ -52,7 +58,7 @@ public final class YaccHook implements PreRepositoryHook<RepositoryPushHookReque
         }
 
         context.registerCommitCallback(
-                new YaccHookCommitCallback(yaccService, context.getSettings()),
+                new YaccHookCommitCallback(yaccService, settings),
                 RepositoryHookCommitFilter.ADDED_TO_REPOSITORY);
 
         // Will be accepted unless commit callback rejects a commit
@@ -62,7 +68,7 @@ public final class YaccHook implements PreRepositoryHook<RepositoryPushHookReque
     private List<YaccError> checkRefs(Settings settings, Collection<RefChange> refChanges) {
         List<YaccError> errors = new ArrayList<>();
 
-        for(RefChange refChange : refChanges) {
+        for (RefChange refChange : refChanges) {
             log.debug("refChange: ref={} type={} fromHash={} toHash={}", refChange.getRef(),
                     refChange.getType(), refChange.getFromHash(), refChange.getToHash());
 
