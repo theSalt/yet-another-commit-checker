@@ -36,7 +36,7 @@ public class BranchNameCheckTest {
 
         assertThat(errors)
                 .containsOnly(new YaccError(YaccError.Type.BRANCH_NAME,
-                        "Invalid branch name. 'bar' does not match regex 'foo'"));
+                        "refs/heads/bar: Invalid branch name. 'bar' does not match regex 'foo'"));
     }
 
     @Test
