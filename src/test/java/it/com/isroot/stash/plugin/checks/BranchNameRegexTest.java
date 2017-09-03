@@ -4,10 +4,10 @@ import com.atlassian.pageobjects.TestedProductFactory;
 import com.atlassian.webdriver.bitbucket.BitbucketTestedProduct;
 import com.atlassian.webdriver.bitbucket.page.BitbucketLoginPage;
 import com.atlassian.webdriver.testing.rule.WebDriverScreenshotRule;
-import it.com.isroot.stash.plugin.YaccBranchCreationPage;
-import it.com.isroot.stash.plugin.YaccGlobalSettingsPage;
-import it.com.isroot.stash.plugin.YaccRepoSettingsPage;
-import it.com.isroot.stash.plugin.YaccTestUtils;
+import it.com.isroot.stash.plugin.pageobjects.YaccBranchCreationPage;
+import it.com.isroot.stash.plugin.pageobjects.YaccGlobalSettingsPage;
+import it.com.isroot.stash.plugin.pageobjects.YaccRepoSettingsPage;
+import it.com.isroot.stash.plugin.util.YaccTestUtils;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -41,7 +41,7 @@ public class BranchNameRegexTest {
         YaccGlobalSettingsPage globalSettings = STASH.visit(BitbucketLoginPage.class)
                 .loginAsSysAdmin(YaccGlobalSettingsPage.class);
 
-        globalSettings.setBranchNameRegex("bugfix/[A-Z]+-[0-9]+.*");
+        globalSettings.setBranchNameRegex("[A-Z]+-[0-9]+.*");
         globalSettings.clickSubmit();
 
         YaccBranchCreationPage branchCreate = STASH.visit(YaccBranchCreationPage.class);
@@ -49,7 +49,7 @@ public class BranchNameRegexTest {
 
         branchCreate.createBranchWithError();
         assertThat(branchCreate.getError()).isEqualTo("Invalid branch name. " +
-                "bugfix/invalid-branch-name does not match regex bugfix/[A-Z]+-[0-9]+.*");
+                "invalid-branch-name does not match regex [A-Z]+-[0-9]+.*");
 
         branchCreate.setBranchName("ABC-123-good-name-" + System.currentTimeMillis());
         branchCreate.createBranch("PROJECT_1", "rep_1");
@@ -62,7 +62,7 @@ public class BranchNameRegexTest {
 
         repoSettingsPage.clickEditYacc();
 
-        repoSettingsPage.setBranchNameRegex("bugfix/repo-[A-Z]+-[0-9]+.*");
+        repoSettingsPage.setBranchNameRegex("repo-[A-Z]+-[0-9]+.*");
         repoSettingsPage.clickSubmit();
 
         YaccBranchCreationPage branchCreate = STASH.visit(YaccBranchCreationPage.class);
@@ -70,7 +70,7 @@ public class BranchNameRegexTest {
 
         branchCreate.createBranchWithError();
         assertThat(branchCreate.getError()).isEqualTo("Invalid branch name. " +
-                "bugfix/invalid-branch-name does not match regex bugfix/repo-[A-Z]+-[0-9]+.*");
+                "invalid-branch-name does not match regex repo-[A-Z]+-[0-9]+.*");
 
         branchCreate.setBranchName("repo-ABC-123-good-name-" + System.currentTimeMillis());
         branchCreate.createBranch("PROJECT_1", "rep_1");

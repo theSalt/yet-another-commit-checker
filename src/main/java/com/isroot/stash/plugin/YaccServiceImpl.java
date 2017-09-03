@@ -156,6 +156,7 @@ public class YaccServiceImpl implements YaccService {
             Pattern pattern = Pattern.compile(excludeBranchRegex);
             Matcher matcher = pattern.matcher(branchName);
             if(matcher.matches()) {
+                log.debug("branch is excluded");
                 return true;
             }
         }

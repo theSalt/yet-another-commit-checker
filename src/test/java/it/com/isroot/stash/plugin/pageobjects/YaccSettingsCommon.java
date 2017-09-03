@@ -1,6 +1,4 @@
-package it.com.isroot.stash.plugin;
-
-import static org.assertj.core.api.Assertions.assertThat;
+package it.com.isroot.stash.plugin.pageobjects;
 
 import com.atlassian.pageobjects.elements.ElementBy;
 import com.atlassian.pageobjects.elements.PageElement;
@@ -8,11 +6,13 @@ import com.atlassian.pageobjects.elements.query.Poller;
 import com.atlassian.webdriver.bitbucket.page.BitbucketPage;
 import com.atlassian.webdriver.bitbucket.util.ElementUtils;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author Sean Ford
  * @since 2015-09-13
  */
-abstract class YaccSettingsCommon extends BitbucketPage {
+public abstract class YaccSettingsCommon extends BitbucketPage {
     @ElementBy(className = "prevent-double-submit")
     private PageElement form;
 

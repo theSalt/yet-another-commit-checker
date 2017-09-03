@@ -1,4 +1,4 @@
-package it.com.isroot.stash.plugin;
+package it.com.isroot.stash.plugin.pageobjects;
 
 import com.atlassian.pageobjects.elements.ElementBy;
 import com.atlassian.pageobjects.elements.PageElement;

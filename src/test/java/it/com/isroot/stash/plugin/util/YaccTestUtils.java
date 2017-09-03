@@ -1,10 +1,12 @@
-package it.com.isroot.stash.plugin;
+package it.com.isroot.stash.plugin.util;
 
 import com.atlassian.bitbucket.async.AsyncTestUtils;
 import com.atlassian.bitbucket.async.WaitCondition;
 import com.atlassian.webdriver.bitbucket.BitbucketTestedProduct;
 import com.atlassian.webdriver.bitbucket.page.BitbucketLoginPage;
 import com.atlassian.webdriver.pageobjects.WebDriverTester;
+import it.com.isroot.stash.plugin.pageobjects.YaccGlobalSettingsPage;
+import it.com.isroot.stash.plugin.pageobjects.YaccRepoSettingsPage;
 import org.hamcrest.Description;
 
 /**
