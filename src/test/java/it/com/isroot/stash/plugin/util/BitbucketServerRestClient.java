@@ -3,9 +3,11 @@ package it.com.isroot.stash.plugin.util;
 import com.google.gson.Gson;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.auth.AuthenticationException;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -14,6 +16,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +25,10 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -100,6 +106,25 @@ public class BitbucketServerRestClient {
 
         update.setEntity(buildJsonEntity(settings));
         execute(update);
+    }
+
+    public void doFormPost(String path, Map<String, String> settings) {
+        HttpPost post = new HttpPost(buildUri(path));
+
+        List<NameValuePair> params = new ArrayList<>();
+        for(Map.Entry<String, String> setting : settings.entrySet()) {
+            params.add(new BasicNameValuePair(setting.getKey(), setting.getValue()));
+        }
+
+        log.info("settings: {}", params);
+
+        try {
+            post.setEntity(new UrlEncodedFormEntity(params));
+            HttpResponse httpResponse  = execute(post);
+            log.info("status: {}", httpResponse.getStatusLine());
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private HttpResponse execute(HttpUriRequest request) {

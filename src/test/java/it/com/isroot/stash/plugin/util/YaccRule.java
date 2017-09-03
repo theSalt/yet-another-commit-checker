@@ -50,5 +50,9 @@ public class YaccRule extends ExternalResource {
     public void configureYaccRepoHook(Map<String, String> settings) {
         restClient.setHookSettings(repoSlug, YACC_HOOK_KEY, settings);
     }
+
+    public void configureYaccGlobalHook(Map<String, String> settings) {
+        restClient.doFormPost("/plugins/servlet/yaccHook/config", settings);
+    }
 }
 

@@ -121,6 +121,12 @@ public class YaccConfigServlet extends HttpServlet {
     }
 
     public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
+        // Shouldn't normally happen because this is initialized in doGet, but might occur during
+        // testing when settings are saved with a POST directly.
+        if (settingsMap == null) {
+            settingsMap = new HashMap<>();
+        }
+
         settingsMap.clear();
 
         for (Object key : req.getParameterMap().keySet()) {
