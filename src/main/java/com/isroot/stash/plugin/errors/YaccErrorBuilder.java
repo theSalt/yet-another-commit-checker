@@ -13,7 +13,7 @@ import java.util.List;
 public class YaccErrorBuilder {
     private static final Logger log = LoggerFactory.getLogger(YaccErrorBuilder.class);
 
-    public static final String ERROR_BEARS = "\n" +
+    public static final String ERROR_BEARS = "" +
             "  (c).-.(c)    (c).-.(c)    (c).-.(c)    (c).-.(c)    (c).-.(c) \n" +
             "   / ._. \\      / ._. \\      / ._. \\      / ._. \\      / ._. \\ \n" +
             " __\\( Y )/__  __\\( Y )/__  __\\( Y )/__  __\\( Y )/__  __\\( Y )/__\n" +
@@ -68,13 +68,16 @@ public class YaccErrorBuilder {
     }
 
     private String getHeader(Settings settings) {
-        String header = settings.getString("errorMessageHeader");
+        String header = "\n";
 
-        if(header == null || header.isEmpty()) {
+        String customHeader = settings.getString("errorMessageHeader");
+        if(customHeader != null && !customHeader.isEmpty()) {
+            header += customHeader;
+        } else {
             // sford: long live the error bears
-            header = ERROR_BEARS;
+            header += ERROR_BEARS;
         }
-
+        
         return header + "\n\n";
     }
 
