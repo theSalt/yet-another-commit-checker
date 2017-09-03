@@ -99,7 +99,7 @@ public class GitRepo {
         return this;
     }
 
-    private CredentialsProvider getCredentialsProvider() {
+    public CredentialsProvider getCredentialsProvider() {
         return new UsernamePasswordCredentialsProvider(USER, PASSWORD);
     }
 
