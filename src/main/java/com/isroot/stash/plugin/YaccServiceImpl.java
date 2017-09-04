@@ -4,21 +4,25 @@ import com.atlassian.bitbucket.auth.AuthenticationContext;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.RefChangeType;
 import com.atlassian.bitbucket.repository.Repository;
-import com.atlassian.bitbucket.scm.git.GitRefPattern;
+import com.atlassian.bitbucket.repository.StandardRefType;
+import com.atlassian.bitbucket.scm.git.command.GitRefCommandFactory;
+import com.atlassian.bitbucket.scm.git.ref.GitAnnotatedTag;
+import com.atlassian.bitbucket.scm.git.ref.GitAnnotatedTagCallback;
+import com.atlassian.bitbucket.scm.git.ref.GitResolveAnnotatedTagsCommandParameters;
 import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.user.ApplicationUser;
 import com.atlassian.bitbucket.user.UserType;
 import com.google.common.collect.Lists;
 import com.isroot.stash.plugin.checks.BranchNameCheck;
-import com.isroot.stash.plugin.commits.CommitsService;
 import com.isroot.stash.plugin.errors.YaccError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -32,38 +36,35 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 public class YaccServiceImpl implements YaccService {
     private static final Logger log = LoggerFactory.getLogger(YaccServiceImpl.class);
 
-
     private final AuthenticationContext stashAuthenticationContext;
-    private final CommitsService commitsService;
     private final JiraService jiraService;
+    private final GitRefCommandFactory gitRefCommandFactory;
 
-    public YaccServiceImpl(AuthenticationContext stashAuthenticationContext, CommitsService commitsService,
-                           JiraService jiraService) {
+    public YaccServiceImpl(AuthenticationContext stashAuthenticationContext,
+            JiraService jiraService, GitRefCommandFactory gitRefCommandFactory) {
         this.stashAuthenticationContext = stashAuthenticationContext;
-        this.commitsService = commitsService;
         this.jiraService = jiraService;
+        this.gitRefCommandFactory = gitRefCommandFactory;
     }
 
     @Override
     public List<YaccError> checkRefChange(Repository repository, Settings settings, RefChange refChange) {
-        boolean isTag = refChange.getRef().getId().startsWith(GitRefPattern.TAGS.getPath());
-
-        List<YaccError> errors = Lists.newArrayList();
+        List<YaccError> errors = new ArrayList<>();
 
         if (refChange.getType() == RefChangeType.ADD) {
             errors.addAll(new BranchNameCheck(settings, refChange.getRef().getId()).check());
-        }
 
-        Set<YaccCommit> commits = commitsService.getNewCommits(repository, refChange);
-        String branchName = refChange.getRef().getId().replace(GitRefPattern.HEADS.getPath(), "");
-        
-        for (YaccCommit commit : commits) {
-            for(YaccError e : checkCommit(settings, commit, !isTag, branchName)) {
-                errors.add(e.prependText(commit.getId()));
+            if (refChange.getRef().getType() == StandardRefType.TAG) {
+                errors.addAll(checkAnnotatedTag(repository, settings, refChange));
             }
         }
 
-        return errors;
+        List<YaccError> errorsWithRef = new ArrayList<>();
+        for (YaccError e : errors) {
+            errorsWithRef.add(e.prependText(refChange.getRef().getId()));
+        }
+
+        return errorsWithRef;
     }
 
     public List<YaccError> checkCommit(Settings settings, YaccCommit commit, boolean checkMessages,
@@ -89,7 +90,7 @@ public class YaccServiceImpl implements YaccService {
             }
         }
 
-        if(checkMessages && !isCommitExcluded(settings, commit) && !isBranchExcluded(settings, branchName)) {
+        if (checkMessages && !isCommitExcluded(settings, commit) && !isBranchExcluded(settings, branchName)) {
             errors.addAll(checkCommitMessageRegex(settings, commit));
 
             // Checking JIRA issues might be dependent on the commit message regex, so only proceed if there are no errors.
@@ -101,9 +102,41 @@ public class YaccServiceImpl implements YaccService {
         return errors;
     }
 
+    private List<YaccError> checkAnnotatedTag(Repository repository, Settings settings,
+            RefChange refChange) {
+        List<YaccError> errors = new ArrayList<>();
+
+        GitResolveAnnotatedTagsCommandParameters params =
+                new GitResolveAnnotatedTagsCommandParameters.Builder()
+                        .tagIds(refChange.getToHash())
+                        .build();
+
+        GitAnnotatedTagCallback callback = new GitAnnotatedTagCallback() {
+            @Override
+            public boolean onTag(@Nonnull GitAnnotatedTag gitAnnotatedTag) throws IOException {
+                log.info("tag refId={} tagger={}", gitAnnotatedTag.getId(),
+                        gitAnnotatedTag.getTagger());
+
+                YaccCommit yaccCommit = new YaccCommit(gitAnnotatedTag);
+
+                ApplicationUser stashUser = stashAuthenticationContext.getCurrentUser();
+                if (stashUser != null) {
+                    errors.addAll(checkCommitterName(settings, yaccCommit, stashUser));
+                    errors.addAll(checkCommitterEmail(settings, yaccCommit, stashUser));
+                }
+                return true;
+            }
+        };
+
+        gitRefCommandFactory.resolveAnnotatedTags(repository, params, callback)
+                .call();
+
+        return errors;
+    }
+
     private boolean isCommitExcluded(Settings settings, YaccCommit commit) {
         // Exclude Merge Commit setting
-        if(settings.getBoolean("excludeMergeCommits", false) && commit.isMerge()) {
+        if (settings.getBoolean("excludeMergeCommits", false) && commit.isMerge()) {
             log.debug("skipping commit {} because it is a merge commit", commit.getId());
 
             return true;
@@ -134,17 +167,17 @@ public class YaccServiceImpl implements YaccService {
         // Exclude by Regex setting
         String excludeRegex = settings.getString("excludeByRegex");
 
-        if(excludeRegex != null && !excludeRegex.isEmpty()) {
+        if (excludeRegex != null && !excludeRegex.isEmpty()) {
             Pattern pattern = Pattern.compile(excludeRegex);
             Matcher matcher = pattern.matcher(commit.getMessage());
-            if(matcher.find()) {
+            if (matcher.find()) {
                 return true;
             }
         }
 
         return false;
     }
-    
+
     private boolean isBranchExcluded(Settings settings, String branchName) {
         // Exclude by Regex setting
         String excludeBranchRegex = settings.getString("excludeBranchRegex");
@@ -152,10 +185,10 @@ public class YaccServiceImpl implements YaccService {
         log.debug("branch check, excludeBranchRegex={} branchName={}", excludeBranchRegex,
                 branchName);
 
-        if(excludeBranchRegex != null && !excludeBranchRegex.isEmpty()) {
+        if (excludeBranchRegex != null && !excludeBranchRegex.isEmpty()) {
             Pattern pattern = Pattern.compile(excludeBranchRegex);
             Matcher matcher = pattern.matcher(branchName);
-            if(matcher.matches()) {
+            if (matcher.matches()) {
                 log.debug("branch is excluded");
                 return true;
             }
@@ -168,10 +201,10 @@ public class YaccServiceImpl implements YaccService {
         List<YaccError> errors = Lists.newArrayList();
 
         String regex = settings.getString("commitMessageRegex");
-        if(!isNullOrEmpty(regex)) {
+        if (!isNullOrEmpty(regex)) {
             Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE);
             Matcher matcher = pattern.matcher(commit.getMessage());
-            if(!matcher.matches()) {
+            if (!matcher.matches()) {
                 errors.add(new YaccError(YaccError.Type.COMMIT_REGEX,
                         "commit message doesn't match regex: " + regex));
             }
@@ -183,28 +216,29 @@ public class YaccServiceImpl implements YaccService {
     private List<YaccError> checkCommitterEmailRegex(Settings settings, YaccCommit commit) {
         List<YaccError> errors = Lists.newArrayList();
         String regex = settings.getString("committerEmailRegex");
-        if(!isNullOrEmpty(regex)) {
+        if (!isNullOrEmpty(regex)) {
             Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE);
             Matcher matcher = pattern.matcher(commit.getCommitter().getEmailAddress().toLowerCase());
-            if(!matcher.matches()) {
+            if (!matcher.matches()) {
                 errors.add(new YaccError(YaccError.Type.COMMITTER_EMAIL_REGEX,
-                    String.format("committer email regex '%s' does not match user email '%s'", regex,
-                    commit.getCommitter().getEmailAddress())));
+                        String.format("committer email regex '%s' does not match user email '%s'", regex,
+                                commit.getCommitter().getEmailAddress())));
             }
         }
 
         return errors;
     }
+
     private List<IssueKey> extractJiraIssuesFromCommitMessage(Settings settings, YaccCommit commit) {
         String message = commit.getMessage();
 
         // If a commit message regex is present, see if it contains a group 1 that can be used to located JIRA issues.
         // If not, just ignore it.
         String regex = settings.getString("commitMessageRegex");
-        if(!isNullOrEmpty(regex)) {
+        if (!isNullOrEmpty(regex)) {
             Pattern pattern = Pattern.compile(regex);
             Matcher matcher = pattern.matcher(message);
-            if(matcher.matches() && matcher.groupCount() > 0) {
+            if (matcher.matches() && matcher.groupCount() > 0) {
                 message = matcher.group(1);
             }
         }
@@ -237,17 +271,15 @@ public class YaccServiceImpl implements YaccService {
                     issues.add(issueKey);
                 }
             }
-        }
-        else {
+        } else {
             issues = extractedKeys;
         }
 
-        if(!issues.isEmpty()) {
-            for(IssueKey issueKey : issues) {
+        if (!issues.isEmpty()) {
+            for (IssueKey issueKey : issues) {
                 errors.addAll(checkJiraIssue(settings, issueKey));
             }
-        }
-        else {
+        } else {
             errors.add(new YaccError("No JIRA Issue found in commit message."));
         }
 
@@ -259,7 +291,7 @@ public class YaccServiceImpl implements YaccService {
 
         errors.addAll(jiraService.doesIssueExist(issueKey));
 
-        if(errors.isEmpty()) {
+        if (errors.isEmpty()) {
             String jqlQuery = settings.getString("issueJqlMatcher");
 
             if (jqlQuery != null && !jqlQuery.isEmpty()) {
@@ -289,7 +321,7 @@ public class YaccServiceImpl implements YaccService {
         if (requireMatchingAuthorEmail && !commit.getCommitter().getEmailAddress().toLowerCase().equals(stashUser.getEmailAddress().toLowerCase())) {
             errors.add(new YaccError(YaccError.Type.COMMITTER_EMAIL,
                     String.format("expected committer email '%s' but found '%s'", stashUser.getEmailAddress(),
-                    commit.getCommitter().getEmailAddress())));
+                            commit.getCommitter().getEmailAddress())));
         }
 
         errors.addAll(checkCommitterEmailRegex(settings, commit));
@@ -309,7 +341,7 @@ public class YaccServiceImpl implements YaccService {
         if (requireMatchingAuthorName && !commit.getCommitter().getName().equalsIgnoreCase(name)) {
             errors.add(new YaccError(YaccError.Type.COMMITTER_NAME,
                     String.format("expected committer name '%s' but found '%s'", name,
-                    commit.getCommitter().getName())));
+                            commit.getCommitter().getName())));
         }
 
         return errors;
@@ -321,12 +353,12 @@ public class YaccServiceImpl implements YaccService {
      * these characters breaks YACC name matching because Stash will provide the Stash user's name
      * with these characters, however, they will never appear in the commit so author name will
      * never match.
-     *
+     * <p>
      * See strbuf_addstr_without_crud() in git's ident.c.
      * Link: https://github.com/git/git/blob/master/ident.c#L155 (current as of 2014-10-06).
      */
     private String removeGitCrud(String name) {
-        if(name != null) {
+        if (name != null) {
             // remove special characters
             name = name.replaceAll("[<>\n]", "");
 

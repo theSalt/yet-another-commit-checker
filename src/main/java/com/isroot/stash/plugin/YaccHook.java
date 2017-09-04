@@ -6,9 +6,7 @@ import com.atlassian.bitbucket.hook.repository.RepositoryHookCommitFilter;
 import com.atlassian.bitbucket.hook.repository.RepositoryHookResult;
 import com.atlassian.bitbucket.hook.repository.RepositoryPushHookRequest;
 import com.atlassian.bitbucket.repository.RefChange;
-import com.atlassian.bitbucket.repository.RefChangeType;
 import com.atlassian.bitbucket.setting.Settings;
-import com.isroot.stash.plugin.checks.BranchNameCheck;
 import com.isroot.stash.plugin.errors.YaccError;
 import com.isroot.stash.plugin.errors.YaccErrorBuilder;
 import org.slf4j.Logger;
@@ -69,12 +67,11 @@ public class YaccHook implements PreRepositoryHook<RepositoryPushHookRequest> {
         List<YaccError> errors = new ArrayList<>();
 
         for (RefChange refChange : refChanges) {
-            log.debug("refChange: ref={} type={} fromHash={} toHash={}", refChange.getRef(),
-                    refChange.getType(), refChange.getFromHash(), refChange.getToHash());
+            log.debug("refChange: ref={} refType={} type={} fromHash={} toHash={}",
+                    refChange.getRef(), refChange.getRef().getType(), refChange.getType(),
+                    refChange.getFromHash(), refChange.getToHash());
 
-            if (refChange.getType() == RefChangeType.ADD) {
-                errors.addAll(new BranchNameCheck(settings, refChange.getRef().getId()).check());
-            }
+            errors = yaccService.checkRefChange(null, settings, refChange);
         }
 
         return errors;

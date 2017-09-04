@@ -1,6 +1,7 @@
 package com.isroot.stash.plugin;
 
 import com.atlassian.bitbucket.commit.Commit;
+import com.atlassian.bitbucket.scm.git.ref.GitAnnotatedTag;
 import com.atlassian.bitbucket.user.Person;
 import com.atlassian.bitbucket.user.SimplePerson;
 
@@ -19,6 +20,13 @@ public class YaccCommit {
                 commit.getCommitter().getEmailAddress());
         this.message = commit.getMessage();
         this.isMerge = commit.getParents().size() > 1;
+    }
+
+    public YaccCommit(GitAnnotatedTag annotatedTag) {
+        this.id = annotatedTag.getId();
+        this.committer = annotatedTag.getTagger();
+        this.message = annotatedTag.getMessage().orElse(null);
+        this.isMerge = false;
     }
 
     /**

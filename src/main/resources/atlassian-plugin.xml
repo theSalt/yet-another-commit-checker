@@ -30,6 +30,9 @@
 
     <component-import key="scmService" interface="com.atlassian.bitbucket.scm.ScmService"/>
 
+    <component-import key="gitRefCommandFactory"
+                      interface="com.atlassian.bitbucket.scm.git.command.GitRefCommandFactory"/>
+
     <component key="commitsService" class="com.isroot.stash.plugin.commits.CommitsServiceImpl" public="true">
         <interface>com.isroot.stash.plugin.commits.CommitsService</interface>
     </component>
