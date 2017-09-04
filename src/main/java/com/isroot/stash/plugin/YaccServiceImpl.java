@@ -1,6 +1,10 @@
 package com.isroot.stash.plugin;
 
 import com.atlassian.bitbucket.auth.AuthenticationContext;
+import com.atlassian.bitbucket.hook.repository.PreRepositoryHookContext;
+import com.atlassian.bitbucket.hook.repository.RepositoryHookCommitFilter;
+import com.atlassian.bitbucket.hook.repository.RepositoryHookResult;
+import com.atlassian.bitbucket.hook.repository.RepositoryPushHookRequest;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.RefChangeType;
 import com.atlassian.bitbucket.repository.Repository;
@@ -15,6 +19,7 @@ import com.atlassian.bitbucket.user.UserType;
 import com.google.common.collect.Lists;
 import com.isroot.stash.plugin.checks.BranchNameCheck;
 import com.isroot.stash.plugin.errors.YaccError;
+import com.isroot.stash.plugin.errors.YaccErrorBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +27,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,6 +54,41 @@ public class YaccServiceImpl implements YaccService {
     }
 
     @Override
+    public RepositoryHookResult check(PreRepositoryHookContext context,
+            RepositoryPushHookRequest repositoryPushHookRequest, Settings settings) {
+        log.debug("YaccHook preUpdate, registering commit callback. settings={}", settings);
+
+        List<YaccError> errors = checkRefs(settings, repositoryPushHookRequest.getRefChanges());
+        if (!errors.isEmpty()) {
+            YaccErrorBuilder errorBuilder = new YaccErrorBuilder(settings);
+            String message = errorBuilder.getErrorMessage(errors);
+
+            return RepositoryHookResult.rejected("Push rejected by YACC", message);
+        }
+
+        context.registerCommitCallback(
+                new YaccHookCommitCallback(this, settings),
+                RepositoryHookCommitFilter.ADDED_TO_REPOSITORY);
+
+        // Will be accepted unless commit callback rejects a commit
+        return RepositoryHookResult.accepted();
+    }
+
+    private List<YaccError> checkRefs(Settings settings, Collection<RefChange> refChanges) {
+        List<YaccError> errors = new ArrayList<>();
+
+        for (RefChange refChange : refChanges) {
+            log.debug("refChange: ref={} refType={} type={} fromHash={} toHash={}",
+                    refChange.getRef(), refChange.getRef().getType(), refChange.getType(),
+                    refChange.getFromHash(), refChange.getToHash());
+
+            errors = checkRefChange(null, settings, refChange);
+        }
+
+        return errors;
+    }
+
+    @Override
     public List<YaccError> checkRefChange(Repository repository, Settings settings, RefChange refChange) {
         List<YaccError> errors = new ArrayList<>();
 
@@ -67,6 +108,7 @@ public class YaccServiceImpl implements YaccService {
         return errorsWithRef;
     }
 
+    @Override
     public List<YaccError> checkCommit(Settings settings, YaccCommit commit, String branchName) {
         log.debug("checking commit id={} name={} email={} message={} branchName={}", commit.getId(),
                 commit.getCommitter().getName(), commit.getCommitter().getEmailAddress(),

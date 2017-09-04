@@ -1,5 +1,6 @@
 package com.isroot.stash.plugin;
 
+import com.atlassian.bitbucket.hook.repository.PreRepositoryHook;
 import com.atlassian.bitbucket.hook.repository.PreRepositoryHookContext;
 import com.atlassian.bitbucket.hook.repository.RepositoryHook;
 import com.atlassian.bitbucket.hook.repository.RepositoryHookResult;
@@ -23,10 +24,11 @@ import java.util.Map;
  * @author Uldis Ansmits
  * @author Jim Bethancourt
  */
-public class YaccPreReceiveHook extends YaccHook {
+public class YaccPreReceiveHook implements PreRepositoryHook<RepositoryPushHookRequest> {
 
     private static final Logger log = LoggerFactory.getLogger(YaccPreReceiveHook.class);
 
+    private final YaccService yaccService;
     private final PluginSettingsFactory pluginSettingsFactory;
     private final SecurityService securityService;
     private final RepositoryHookService repositoryHookService;
@@ -35,7 +37,7 @@ public class YaccPreReceiveHook extends YaccHook {
                               PluginSettingsFactory pluginSettingsFactory,
                               SecurityService securityService,
                               RepositoryHookService repositoryHookService) {
-        super(yaccService);
+        this.yaccService = yaccService;
         this.pluginSettingsFactory = pluginSettingsFactory;
         this.securityService = securityService;
         this.repositoryHookService = repositoryHookService;
@@ -53,6 +55,9 @@ public class YaccPreReceiveHook extends YaccHook {
             }
         });
 
+        log.debug("yacc repo hook, enabled={} configured={}", hook.isEnabled(),
+                hook.isConfigured());
+
         if(!hook.isEnabled() && !hook.isConfigured()) {
             // Repository hook not configured
             log.debug("PreReceiveRepositoryHook not configured. Run PreReceiveHook");
@@ -62,7 +67,7 @@ public class YaccPreReceiveHook extends YaccHook {
             log.debug("global settings: {}", storedConfig.asMap());
 
             if(areThereEnabledSettings(storedConfig.asMap())) {
-                return check(context, repositoryPushHookRequest, storedConfig);
+                return yaccService.check(context, repositoryPushHookRequest, storedConfig);
             } else {
                 log.debug("no need to run yacc because no global settings configured");
             }

@@ -1,10 +1,10 @@
 package ut.com.isroot.stash.plugin;
 
-import com.atlassian.bitbucket.hook.HookResponse;
-import com.atlassian.bitbucket.hook.repository.RepositoryHook;
+import com.atlassian.bitbucket.hook.repository.PreRepositoryHookContext;
+import com.atlassian.bitbucket.hook.repository.RepositoryHookResult;
 import com.atlassian.bitbucket.hook.repository.RepositoryHookService;
+import com.atlassian.bitbucket.hook.repository.RepositoryPushHookRequest;
 import com.atlassian.bitbucket.permission.Permission;
-import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.user.EscalatedSecurityContext;
@@ -17,21 +17,23 @@ import com.isroot.stash.plugin.YaccConfigServlet;
 import com.isroot.stash.plugin.YaccPreReceiveHook;
 import com.isroot.stash.plugin.YaccService;
 import org.junit.Before;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import ut.com.isroot.stash.plugin.mock.MockRefChange;
 import ut.com.isroot.stash.plugin.mock.MockSettingsBuilder;
+import ut.com.isroot.stash.plugin.mock.StubRepositoryHook;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 
@@ -44,17 +46,17 @@ public class YaccPreReceiveHookTest {
     @Mock
     private YaccService yaccService;
     @Mock
-    private HookResponse hookResponse;
-    @Mock
     private RepositoryHookService repositoryHookService;
-    @Mock
-    private RepositoryHook repositoryHook;
     @Mock
     private Repository repository;
     @Mock
     private SecurityService securityService;
     @Mock
     private EscalatedSecurityContext escalatedSecurityContext;
+    @Mock
+    private RepositoryPushHookRequest repositoryPushHookRequest;
+    @Mock
+    private PreRepositoryHookContext preRepositoryHookContext;
 
     @Captor
     private ArgumentCaptor<Settings> settingsCapture;
@@ -63,7 +65,8 @@ public class YaccPreReceiveHookTest {
 
     private Map<String, Object> globalSettingsMap = new HashMap<>();
 
-    private StringWriter errorMessage;
+    private StubRepositoryHook repositoryHook;
+
     private YaccPreReceiveHook yaccPreReceiveHook;
 
     @Before
@@ -75,6 +78,8 @@ public class YaccPreReceiveHookTest {
         yaccPreReceiveHook = new YaccPreReceiveHook(yaccService,
                 pluginSettingsFactory, securityService, repositoryHookService);
 
+        repositoryHook = new StubRepositoryHook();
+
         //mock hook retrieval
         when(securityService.withPermission(Permission.REPO_ADMIN, "Get plugin configuration"))
                 .thenReturn(escalatedSecurityContext);
@@ -82,157 +87,65 @@ public class YaccPreReceiveHookTest {
 
         when(repositoryHookService.createSettingsBuilder()).thenReturn(new MockSettingsBuilder());
 
-        errorMessage = new StringWriter();
-        when(hookResponse.err()).thenReturn(new PrintWriter(errorMessage));
-
         PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
         pluginSettings.put(YaccConfigServlet.SETTINGS_MAP, globalSettingsMap);
+
+        when(repositoryPushHookRequest.getRepository()).thenReturn(repository);
     }
 
-// sean: FIXME
-//    @Test
-//    public void testOnReceive_repositoryHookConfigured() {
-//        when(repositoryHook.isConfigured()).thenReturn(true);
-//        when(repositoryHook.isEnabled()).thenReturn(true);
-//
-//        RefChange refChange = mock(RefChange.class);
-//        boolean allowed = yaccPreReceiveHook.onReceive(repository, Lists.newArrayList(refChange), null);
-//        assertThat(allowed).isTrue();
-//    }
-//
-//    @Test
-//    public void testOnReceive_deleteRefChangesIgnored() {
-//        RefChange refChange = mock(RefChange.class);
-//        when(refChange.getType()).thenReturn(RefChangeType.DELETE);
-//
-//        boolean allowed = yaccPreReceiveHook.onReceive(repository, Lists.newArrayList(refChange), null);
-//        assertThat(allowed).isTrue();
-//        verifyZeroInteractions(yaccService);
-//    }
-//
-//    @Test
-//    public void testOnReceive_NullRefChangesIgnored() {
-//        RefChange refChange = mock(RefChange.class);
-//        when(refChange.getType()).thenReturn(RefChangeType.ADD);
-//        when(refChange.getToHash()).thenReturn("0000000000000000000000000000000000000000");
-//
-//        boolean allowed = yaccPreReceiveHook.onReceive(repository, Lists.newArrayList(refChange), null);
-//        assertThat(allowed).isTrue();
-//        verifyZeroInteractions(yaccService);
-//    }
-//
-//    @Test
-//    public void testOnReceive_pushRejectedIfThereAreErrors() {
-//        globalSettingsMap.put("someSetting", "true");
-//        when(yaccService.checkRefChange(any(Repository.class), any(Settings.class), any(RefChange.class)))
-//                .thenReturn(Lists.newArrayList(new YaccError("error with commit")));
-//
-//        boolean allowed = yaccPreReceiveHook.onReceive(repository, Lists.newArrayList(new MockRefChange()),
-//                hookResponse);
-//        assertThat(allowed).isFalse();
-//    }
-//
-//    @Test
-//    public void testOnReceive_errorsArePrintedToHookStdErr() {
-//        globalSettingsMap.put("someSetting", "true");
-//        when(yaccService.checkRefChange(any(Repository.class), any(Settings.class), any(RefChange.class)))
-//                .thenReturn(Lists.newArrayList(new YaccError("error1"), new YaccError("error2")));
-//
-//        yaccPreReceiveHook.onReceive(repository, getMockRefChanges(), hookResponse);
-//
-//        assertThat(errorMessage.toString())
-//                .isEqualTo(YaccErrorBuilder.ERROR_BEARS + "\n" +
-//                        "\n" +
-//                        "refs/heads/master: error1\n" +
-//                        "\n" +
-//                        "refs/heads/master: error2\n" +
-//                        "\n");
-//    }
-//
-//    @Test
-//    public void testOnReceive_defaultHeaderDisplayedIfErrorMessageHeaderIsEmpty() {
-//        when(yaccService.checkRefChange(any(Repository.class), any(Settings.class), any(RefChange.class)))
-//                .thenReturn(Lists.newArrayList(new YaccError("error1")));
-//
-//        globalSettingsMap.put("someSetting", "true");
-//        globalSettingsMap.put("errorMessageHeader", "");
-//
-//        yaccPreReceiveHook.onReceive(repository, getMockRefChanges(), hookResponse);
-//
-//        assertThat(errorMessage.toString()).startsWith(YaccErrorBuilder.ERROR_BEARS);
-//    }
-//
-//    @Test
-//    public void testOnReceive_nonEmptyErrorMessageHeaderReplacesDefaultHeader() {
-//        when(yaccService.checkRefChange(any(Repository.class), any(Settings.class), any(RefChange.class)))
-//                .thenReturn(Lists.newArrayList(new YaccError("error1")));
-//
-//        globalSettingsMap.put("someSetting", "true");
-//        globalSettingsMap.put("errorMessageHeader", "Custom Header");
-//
-//        yaccPreReceiveHook.onReceive(repository, getMockRefChanges(), hookResponse);
-//
-//        assertThat(errorMessage.toString()).isEqualTo("Custom Header\n" +
-//                "\n" +
-//                "refs/heads/master: error1\n\n");
-//    }
-//
-//    @Test
-//    public void testOnReceive_errorMessageFooterAddedToEndOfOutput() {
-//        when(yaccService.checkRefChange(any(Repository.class), any(Settings.class), any(RefChange.class)))
-//                .thenReturn(Lists.newArrayList(new YaccError("error1")));
-//
-//        globalSettingsMap.put("someSetting", "true");
-//        globalSettingsMap.put("errorMessageFooter", "Custom Footer");
-//
-//        yaccPreReceiveHook.onReceive(repository, getMockRefChanges(), hookResponse);
-//
-//        assertThat(errorMessage.toString()).endsWith("\nCustom Footer\n\n");
-//    }
-//
-//    @Test
-//    public void testOnReceive_nullSettingsMap_hookWorksBeforeItHasBeenConfigured() {
-//        pluginSettingsFactory.createGlobalSettings().put(YaccConfigServlet.SETTINGS_MAP, null);
-//
-//        boolean isPushAllowed = yaccPreReceiveHook.onReceive(repository, getMockRefChanges(), hookResponse);
-//
-//        assertThat(isPushAllowed).isTrue();
-//    }
-//
-//    @Test
-//    public void testOnReceive_globalHookSettingsPassedToHook() {
-//        globalSettingsMap.put("commitMessageRegex", "bar");
-//        globalSettingsMap.put("requireMatchingAuthorEmail", "true");
-//        globalSettingsMap.put("committerEmailRegex", "email.com");
-//
-//        yaccPreReceiveHook.onReceive(repository, getMockRefChanges(), hookResponse);
-//
-//        verify(yaccService).checkRefChange(eq(repository), settingsCapture.capture(), any(RefChange.class));
-//
-//        Settings hookSettings = settingsCapture.getValue();
-//
-//        assertThat(hookSettings.asMap())
-//                .contains(
-//                        entry("commitMessageRegex", "bar"),
-//                        entry("requireMatchingAuthorEmail", true),
-//                        entry("committerEmailRegex","email.com"));
-//    }
-//
-//    @Test
-//    public void testOnReceive_yaccNotRunIfNoChecksAreConfigured() {
-//        globalSettingsMap.put("disabledBooleanSetting", "false");
-//        globalSettingsMap.put("emptySetting", "");
-//        globalSettingsMap.put("errorMessage", "error messages ignored");
-//
-//        yaccPreReceiveHook.onReceive(repository, getMockRefChanges(), hookResponse);
-//
-//        verifyZeroInteractions(yaccService);
-//    }
+    @Test
+    public void testPreUpdate_globalHookAcceptsIfRepoHookEnabledAndConfigured() {
+        globalSettingsMap.put("commitMessageRegex", "bar");
+        repositoryHook.setConfigured(true);
+        repositoryHook.setEnabled(true);
 
-    private List<RefChange> getMockRefChanges() {
-        List<RefChange> refChanges = new ArrayList<>();
-        refChanges.add(new MockRefChange());
-        return refChanges;
+        RepositoryHookResult result = yaccPreReceiveHook.preUpdate(preRepositoryHookContext,
+                repositoryPushHookRequest);
+
+        verifyZeroInteractions(yaccService);
+        assertThat(result).isEqualTo(RepositoryHookResult.accepted());
     }
 
+    @Test
+    public void testPreUpdate_nullSettingsMap_hookWorksBeforeItHasBeenConfigured() {
+        pluginSettingsFactory.createGlobalSettings().put(YaccConfigServlet.SETTINGS_MAP, null);
+
+        RepositoryHookResult result = yaccPreReceiveHook
+                .preUpdate(preRepositoryHookContext, repositoryPushHookRequest);
+
+        assertThat(result).isEqualTo(RepositoryHookResult.accepted());
+    }
+
+    @Test
+    public void testPreUpdate_globalHookSettingsPassedToHook() {
+        globalSettingsMap.put("commitMessageRegex", "bar");
+        globalSettingsMap.put("requireMatchingAuthorEmail", "true");
+        globalSettingsMap.put("committerEmailRegex", "email.com");
+
+        yaccPreReceiveHook.preUpdate(preRepositoryHookContext, repositoryPushHookRequest);
+
+        verify(yaccService).check(eq(preRepositoryHookContext), eq(repositoryPushHookRequest),
+                settingsCapture.capture());
+
+        Settings hookSettings = settingsCapture.getValue();
+
+        assertThat(hookSettings.asMap()).contains(
+                entry("commitMessageRegex", "bar"),
+                entry("requireMatchingAuthorEmail", true),
+                entry("committerEmailRegex", "email.com"));
+    }
+
+    @Test
+    public void testPreUpdate_globalHookNotRunIfNoSettingsEnabled() {
+        globalSettingsMap.put("disabledBooleanSetting", "false");
+        globalSettingsMap.put("emptySetting", "");
+        globalSettingsMap.put("errorMessage", "error messages ignored");
+
+        RepositoryHookResult result = yaccPreReceiveHook
+                .preUpdate(preRepositoryHookContext, repositoryPushHookRequest);
+
+        assertThat(result).isEqualTo(RepositoryHookResult.accepted());
+
+        verifyZeroInteractions(yaccService);
+    }
 }
