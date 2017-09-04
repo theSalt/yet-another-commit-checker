@@ -61,7 +61,7 @@ class YaccHookCommitCallback implements PreRepositoryHookCommitCallback {
 
     @Override
     public void onEnd() {
-        log.info("callback onEnd");
+        log.debug("callback onEnd");
 
         if (!errors.isEmpty()) {
             YaccErrorBuilder errorBuilder = new YaccErrorBuilder(settings);
