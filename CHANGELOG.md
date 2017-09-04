@@ -1,5 +1,9 @@
 # YACC Changelog
 
+### 1.17 (UNRELEASED)
+
+* Performance: Use new [BBS 5 Hook APIs](https://developer.atlassian.com/bitbucket/server/docs/latest/how-tos/hooks-merge-checks-guide.html) to obtain new commits to avoid calling out to git. 
+
 ### 1.16 (2017-05-08)
 
 * Feature: Support for Bitbucket Server 5!
