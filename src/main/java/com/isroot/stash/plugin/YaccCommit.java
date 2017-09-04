@@ -1,5 +1,8 @@
 package com.isroot.stash.plugin;
 
+import com.atlassian.bitbucket.commit.Commit;
+import com.atlassian.bitbucket.scm.git.ref.GitAnnotatedTag;
+import com.atlassian.bitbucket.user.Person;
 import com.atlassian.bitbucket.user.SimplePerson;
 
 /**
@@ -7,9 +10,24 @@ import com.atlassian.bitbucket.user.SimplePerson;
  */
 public class YaccCommit {
     private final String id;
-    private final SimplePerson committer;
+    private final Person committer;
     private final String message;
     private final boolean isMerge;
+
+    public YaccCommit(Commit commit) {
+        this.id = commit.getId();
+        this.committer = new SimplePerson(commit.getCommitter().getName(),
+                commit.getCommitter().getEmailAddress());
+        this.message = commit.getMessage();
+        this.isMerge = commit.getParents().size() > 1;
+    }
+
+    public YaccCommit(GitAnnotatedTag annotatedTag) {
+        this.id = annotatedTag.getId();
+        this.committer = annotatedTag.getTagger();
+        this.message = annotatedTag.getMessage().orElse(null);
+        this.isMerge = false;
+    }
 
     /**
      * Construct a new commit instance.
@@ -54,7 +72,7 @@ public class YaccCommit {
      *
      * @return Git committer identity.
      */
-    public SimplePerson getCommitter() {
+    public Person getCommitter() {
         return committer;
     }
 

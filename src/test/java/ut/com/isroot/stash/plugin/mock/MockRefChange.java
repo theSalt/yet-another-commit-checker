@@ -4,6 +4,7 @@ import com.atlassian.bitbucket.repository.MinimalRef;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.RefChangeType;
 import com.atlassian.bitbucket.repository.RefType;
+import com.atlassian.bitbucket.repository.StandardRefType;
 
 import javax.annotation.Nonnull;
 
@@ -16,10 +17,12 @@ public class MockRefChange implements RefChange {
     private String fromHash;
     private String toHash;
     private RefChangeType type;
+    private RefType refType;
 
     public MockRefChange() {
         this.refId = "refs/heads/master";
         this.type = RefChangeType.UPDATE;
+        this.refType = StandardRefType.BRANCH;
     }
 
     public MockRefChange(String refId) {
@@ -45,7 +48,7 @@ public class MockRefChange implements RefChange {
             @Nonnull
             @Override
             public RefType getType() {
-                throw new UnsupportedOperationException();
+                return refType;
             }
         };
     }

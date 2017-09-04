@@ -38,7 +38,7 @@ public class ErrorsTest {
                 .containsExactly(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
 
         assertThat(pushResult.getMessages())
-                .startsWith("\n" +
+                .startsWith("Push rejected by YACC\n\n" +
                         "  (c)")
                 .contains("|| E ||")
                 .contains("Push rejected.\n" +
@@ -81,7 +81,7 @@ public class ErrorsTest {
                 .containsExactly(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
 
         assertThat(pushResult.getMessages())
-                .startsWith("custom header\n" +
+                .startsWith("Push rejected by YACC\n\ncustom header\n" +
                         "\n" +
                         "refs/heads/master:");
     }

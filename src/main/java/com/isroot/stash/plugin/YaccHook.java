@@ -1,26 +1,20 @@
 package com.isroot.stash.plugin;
 
-import com.atlassian.bitbucket.hook.HookResponse;
-import com.atlassian.bitbucket.hook.repository.PreReceiveRepositoryHook;
-import com.atlassian.bitbucket.hook.repository.RepositoryHookContext;
-import com.atlassian.bitbucket.repository.RefChange;
-import com.atlassian.bitbucket.repository.RefChangeType;
+import com.atlassian.bitbucket.hook.repository.PreRepositoryHook;
+import com.atlassian.bitbucket.hook.repository.PreRepositoryHookContext;
+import com.atlassian.bitbucket.hook.repository.RepositoryHookResult;
+import com.atlassian.bitbucket.hook.repository.RepositoryPushHookRequest;
 import com.atlassian.bitbucket.setting.Settings;
-import com.google.common.collect.Lists;
-import com.isroot.stash.plugin.errors.YaccError;
-import com.isroot.stash.plugin.errors.YaccErrorBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Sean Ford
  * @since 2013-05-11
  */
-public final class YaccHook implements PreReceiveRepositoryHook {
+public class YaccHook implements PreRepositoryHook<RepositoryPushHookRequest> {
     private static final Logger log = LoggerFactory.getLogger(YaccHook.class);
 
     private final YaccService yaccService;
@@ -29,64 +23,15 @@ public final class YaccHook implements PreReceiveRepositoryHook {
         this.yaccService = yaccService;
     }
 
+    @Nonnull
     @Override
-    public boolean onReceive(@Nonnull RepositoryHookContext repositoryHookContext,
-                             @Nonnull Collection<RefChange> refChanges, @Nonnull HookResponse hookResponse) {
-        List<YaccError> errors = Lists.newArrayList();
-        Settings settings = repositoryHookContext.getSettings();
+    public RepositoryHookResult preUpdate(
+            @Nonnull PreRepositoryHookContext context,
+            @Nonnull RepositoryPushHookRequest repositoryPushHookRequest) {
+        final Settings settings = context.getSettings();
 
-        for (RefChange rf : refChanges) {
-            log.debug("checking ref change refId={} fromHash={} toHash={} type={}",
-                    rf.getRef().getId(), rf.getFromHash(), rf.getToHash(), rf.getType());
+        log.debug("yacc settings: {}", settings.asMap());
 
-            if (rf.getType() == RefChangeType.DELETE) {
-                continue;
-            }
-            // A toRef of 0000000000000000000000000000000000000000 means that
-            // it is a delete
-            // A fromRef of 0000000000000000000000000000000000000000 means that
-            // the ref doesn't currently exist.
-            // Normally, that means that it is an ADD.
-            // However, when deleting a ref that doesn't exist, *both* refs
-            // will be zeros (there's no current ref AND there will be no ref
-            // after the push)
-            // Stash treats this as an ADD (ie the code that assigns the type
-            // checks fromRef being all zeros before checking toRef)
-            // Arguably, since the end result is that the ref won't exist the
-            // "most correct" option is to treat this as a DELETE.
-            // But Stash doesn't do that, so explicitly look for this scenario.
-            // Leaving this causes errors when trying to look up the bogus id
-            // in the respository and failing to match
-            if (rf.getType() == RefChangeType.ADD && rf.getToHash().equals("0000000000000000000000000000000000000000")) {
-                continue;
-            }
-
-            if(rf.getRef().getId().startsWith("refs/notes")) {
-                log.debug("skipping git notes");
-
-                continue;
-            }
-
-            for (YaccError e : yaccService.checkRefChange(repositoryHookContext.getRepository(),
-                    settings, rf)) {
-                errors.add(e.prependText(rf.getRef().getId()));
-            }
-        }
-
-        if (errors.isEmpty()) {
-            log.debug("push allowed");
-
-            return true;
-        } else {
-            YaccErrorBuilder errorBuilder = new YaccErrorBuilder(settings);
-
-            hookResponse.err().print(errorBuilder.getErrorMessage(errors));
-
-            log.debug("push rejected");
-
-            return false;
-        }
+        return yaccService.check(context, repositoryPushHookRequest, settings);
     }
-
-
 }

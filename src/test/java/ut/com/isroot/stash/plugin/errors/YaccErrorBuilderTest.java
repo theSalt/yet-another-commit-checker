@@ -32,7 +32,7 @@ public class YaccErrorBuilderTest {
     public void testGetErrorMessage_defaultHeader() {
         String message = yaccErrorBuilder.getErrorMessage(new ArrayList<YaccError>());
 
-        assertThat(message).isEqualTo(YaccErrorBuilder.ERROR_BEARS + "\n\n");
+        assertThat(message).isEqualTo("\n" + YaccErrorBuilder.ERROR_BEARS + "\n\n");
     }
 
     @Test
@@ -41,7 +41,7 @@ public class YaccErrorBuilderTest {
 
         String message = yaccErrorBuilder.getErrorMessage(new ArrayList<YaccError>());
 
-        assertThat(message).isEqualTo(YaccErrorBuilder.ERROR_BEARS + "\n\n");
+        assertThat(message).isEqualTo("\n" + YaccErrorBuilder.ERROR_BEARS + "\n\n");
 
         verify(settings).getString("errorMessageHeader");
     }
@@ -52,7 +52,7 @@ public class YaccErrorBuilderTest {
 
         String message = yaccErrorBuilder.getErrorMessage(new ArrayList<YaccError>());
 
-        assertThat(message).isEqualTo("custom header\n\n");
+        assertThat(message).isEqualTo("\ncustom header\n\n");
     }
 
     @Test
@@ -62,7 +62,7 @@ public class YaccErrorBuilderTest {
 
         String message = yaccErrorBuilder.getErrorMessage(errors);
 
-        assertThat(message).isEqualTo(YaccErrorBuilder.ERROR_BEARS + "\n\n"
+        assertThat(message).isEqualTo("\n" + YaccErrorBuilder.ERROR_BEARS + "\n\n"
                 + "commit error\n"
                 + "\n");
     }
@@ -75,7 +75,7 @@ public class YaccErrorBuilderTest {
 
         String message = yaccErrorBuilder.getErrorMessage(errors);
 
-        assertThat(message).isEqualTo(YaccErrorBuilder.ERROR_BEARS + "\n\n"
+        assertThat(message).isEqualTo("\n" + YaccErrorBuilder.ERROR_BEARS + "\n\n"
                 + "commit error\n"
                 + "\n"
                 + "another error\n"
@@ -91,7 +91,7 @@ public class YaccErrorBuilderTest {
 
         String message = yaccErrorBuilder.getErrorMessage(errors);
 
-        assertThat(message).isEqualTo(YaccErrorBuilder.ERROR_BEARS + "\n\n"
+        assertThat(message).isEqualTo("\n" + YaccErrorBuilder.ERROR_BEARS + "\n\n"
                 + "commit error\n"
                 + "\n"
                 + "custom footer\n"
@@ -107,7 +107,7 @@ public class YaccErrorBuilderTest {
 
         String message = yaccErrorBuilder.getErrorMessage(errors);
 
-        assertThat(message).isEqualTo(YaccErrorBuilder.ERROR_BEARS + "\n\n"
+        assertThat(message).isEqualTo("\n" + YaccErrorBuilder.ERROR_BEARS + "\n\n"
                 + "commit error\n"
                 + "\n"
                 + "    more info\n"

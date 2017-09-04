@@ -1,12 +1,12 @@
 package com.isroot.stash.plugin;
 
-import com.atlassian.bitbucket.hook.HookResponse;
-import com.atlassian.bitbucket.hook.PreReceiveHook;
+import com.atlassian.bitbucket.hook.repository.PreRepositoryHook;
+import com.atlassian.bitbucket.hook.repository.PreRepositoryHookContext;
 import com.atlassian.bitbucket.hook.repository.RepositoryHook;
-import com.atlassian.bitbucket.hook.repository.RepositoryHookContext;
+import com.atlassian.bitbucket.hook.repository.RepositoryHookResult;
 import com.atlassian.bitbucket.hook.repository.RepositoryHookService;
+import com.atlassian.bitbucket.hook.repository.RepositoryPushHookRequest;
 import com.atlassian.bitbucket.permission.Permission;
-import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.user.SecurityService;
@@ -16,37 +16,38 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import java.util.Collection;
 import java.util.Map;
 
 /**
+ * System-wide pre-receive hook.  Will defer to the local repository YACC hook configuration if present.
+ *
  * @author Uldis Ansmits
  * @author Jim Bethancourt
- *
- * System-wide pre-receive hook.  Will defer to the local repository YACC hook configuration if present.
  */
-public class YaccPreReceiveHook implements PreReceiveHook {
+public class YaccGlobalHook implements PreRepositoryHook<RepositoryPushHookRequest> {
 
-    private static final Logger log = LoggerFactory.getLogger(YaccPreReceiveHook.class);
+    private static final Logger log = LoggerFactory.getLogger(YaccGlobalHook.class);
 
-    private final YaccHook yaccHook;
+    private final YaccService yaccService;
     private final PluginSettingsFactory pluginSettingsFactory;
     private final SecurityService securityService;
     private final RepositoryHookService repositoryHookService;
 
-
-    public YaccPreReceiveHook(YaccService yaccService,
+    public YaccGlobalHook(YaccService yaccService,
                               PluginSettingsFactory pluginSettingsFactory,
                               SecurityService securityService,
                               RepositoryHookService repositoryHookService) {
-        yaccHook = new YaccHook(yaccService);
+        this.yaccService = yaccService;
         this.pluginSettingsFactory = pluginSettingsFactory;
         this.securityService = securityService;
         this.repositoryHookService = repositoryHookService;
     }
 
+    @Nonnull
     @Override
-    public boolean onReceive(@Nonnull final Repository repository, @Nonnull Collection<RefChange> refChanges, @Nonnull HookResponse hookResponse) {
+    public RepositoryHookResult preUpdate(@Nonnull PreRepositoryHookContext context,
+            @Nonnull RepositoryPushHookRequest repositoryPushHookRequest) {
+        final Repository repository = repositoryPushHookRequest.getRepository();
 
         RepositoryHook hook = securityService.withPermission(Permission.REPO_ADMIN, "Get plugin configuration").call(new UncheckedOperation<RepositoryHook>() {
             public RepositoryHook perform() {
@@ -54,12 +55,10 @@ public class YaccPreReceiveHook implements PreReceiveHook {
             }
         });
 
-        if (hook.isEnabled() && hook.isConfigured()) {
-            // Repository hook is configured and enabled.
-            // Repository hook overrides default pre-receive hook configuration
-            log.debug("PreReceiveRepositoryHook configured. Skip PreReceiveHook");
-            return true;
-        } else {
+        log.debug("yacc repo hook, enabled={} configured={}", hook.isEnabled(),
+                hook.isConfigured());
+
+        if(!hook.isEnabled() && !hook.isConfigured()) {
             // Repository hook not configured
             log.debug("PreReceiveRepositoryHook not configured. Run PreReceiveHook");
 
@@ -68,13 +67,16 @@ public class YaccPreReceiveHook implements PreReceiveHook {
             log.debug("global settings: {}", storedConfig.asMap());
 
             if(areThereEnabledSettings(storedConfig.asMap())) {
-                return yaccHook.onReceive(new HookContext(repository, storedConfig), refChanges, hookResponse);
+                return yaccService.check(context, repositoryPushHookRequest, storedConfig);
             } else {
                 log.debug("no need to run yacc because no global settings configured");
-
-                return true;
             }
+        } else {
+            log.debug("yacc repository hook enabled");
         }
+
+        // Will be accepted unless commit callback rejects a commit
+        return RepositoryHookResult.accepted();
     }
 
     /**
@@ -107,11 +109,5 @@ public class YaccPreReceiveHook implements PreReceiveHook {
         }
 
         return false;
-    }
-
-    private static class HookContext extends RepositoryHookContext {
-        public HookContext(@Nonnull Repository repository, @Nonnull Settings settings) {
-            super(repository, settings);
-        }
     }
 }
