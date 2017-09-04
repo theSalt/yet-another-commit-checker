@@ -47,8 +47,7 @@ class YaccHookCommitCallback implements PreRepositoryHookCommitCallback {
 
         String branchName = commitDetails.getRef().getDisplayId();
 
-        List<YaccError> commitErrors = yaccService.checkCommit(settings, yaccCommit, true,
-                branchName);
+        List<YaccError> commitErrors = yaccService.checkCommit(settings, yaccCommit, branchName);
 
         for (YaccError e : commitErrors) {
             String refAndCommitId = String.format("%s: %s",

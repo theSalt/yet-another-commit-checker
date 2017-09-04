@@ -12,9 +12,7 @@ import java.util.List;
  * @since 2014-01-14
  */
 public interface YaccService {
-    List<YaccError> checkRefChange(Repository repository, Settings settings,
-            RefChange refChange);
+    List<YaccError> checkRefChange(Repository repository, Settings settings, RefChange refChange);
 
-    List<YaccError> checkCommit(Settings settings, YaccCommit commit, boolean checkMessages,
-            String branchName);
+    List<YaccError> checkCommit(Settings settings, YaccCommit commit, String branchName);
 }

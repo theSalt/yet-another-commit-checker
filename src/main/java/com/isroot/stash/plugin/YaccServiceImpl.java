@@ -67,8 +67,7 @@ public class YaccServiceImpl implements YaccService {
         return errorsWithRef;
     }
 
-    public List<YaccError> checkCommit(Settings settings, YaccCommit commit, boolean checkMessages,
-            String branchName) {
+    public List<YaccError> checkCommit(Settings settings, YaccCommit commit, String branchName) {
         log.debug("checking commit id={} name={} email={} message={} branchName={}", commit.getId(),
                 commit.getCommitter().getName(), commit.getCommitter().getEmailAddress(),
                 commit.getMessage(), branchName);
@@ -90,7 +89,7 @@ public class YaccServiceImpl implements YaccService {
             }
         }
 
-        if (checkMessages && !isCommitExcluded(settings, commit) && !isBranchExcluded(settings, branchName)) {
+        if (!isCommitExcluded(settings, commit) && !isBranchExcluded(settings, branchName)) {
             errors.addAll(checkCommitMessageRegex(settings, commit));
 
             // Checking JIRA issues might be dependent on the commit message regex, so only proceed if there are no errors.
