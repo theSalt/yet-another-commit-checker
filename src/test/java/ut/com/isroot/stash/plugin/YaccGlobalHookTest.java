@@ -14,7 +14,7 @@ import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.atlassian.sal.testresources.pluginsettings.MockPluginSettingsFactory;
 import com.isroot.stash.plugin.YaccConfigServlet;
-import com.isroot.stash.plugin.YaccPreReceiveHook;
+import com.isroot.stash.plugin.YaccGlobalHook;
 import com.isroot.stash.plugin.YaccService;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,7 +42,7 @@ import static org.mockito.Mockito.when;
  *
  * @author Jim Bethancourt
  */
-public class YaccPreReceiveHookTest {
+public class YaccGlobalHookTest {
     @Mock
     private YaccService yaccService;
     @Mock
@@ -67,7 +67,7 @@ public class YaccPreReceiveHookTest {
 
     private StubRepositoryHook repositoryHook;
 
-    private YaccPreReceiveHook yaccPreReceiveHook;
+    private YaccGlobalHook yaccPreReceiveHook;
 
     @Before
     public void setup() throws Throwable {
@@ -75,7 +75,7 @@ public class YaccPreReceiveHookTest {
 
         pluginSettingsFactory = new MockPluginSettingsFactory();
 
-        yaccPreReceiveHook = new YaccPreReceiveHook(yaccService,
+        yaccPreReceiveHook = new YaccGlobalHook(yaccService,
                 pluginSettingsFactory, securityService, repositoryHookService);
 
         repositoryHook = new StubRepositoryHook();

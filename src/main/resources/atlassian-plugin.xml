@@ -68,7 +68,7 @@
     <component-import key="soyTemplateRenderer" interface="com.atlassian.soy.renderer.SoyTemplateRenderer"/>
 
     <repository-hook key="yaccGlobalHook" name="Yet Another Commit Checker"
-                     class="com.isroot.stash.plugin.YaccPreReceiveHook"
+                     class="com.isroot.stash.plugin.YaccGlobalHook"
                      configurable="false">
         <description>Yet Another Commit Checker global pre-receive hook configuration. Is overridden by repository hook
             configurations.

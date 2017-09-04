@@ -24,16 +24,16 @@ import java.util.Map;
  * @author Uldis Ansmits
  * @author Jim Bethancourt
  */
-public class YaccPreReceiveHook implements PreRepositoryHook<RepositoryPushHookRequest> {
+public class YaccGlobalHook implements PreRepositoryHook<RepositoryPushHookRequest> {
 
-    private static final Logger log = LoggerFactory.getLogger(YaccPreReceiveHook.class);
+    private static final Logger log = LoggerFactory.getLogger(YaccGlobalHook.class);
 
     private final YaccService yaccService;
     private final PluginSettingsFactory pluginSettingsFactory;
     private final SecurityService securityService;
     private final RepositoryHookService repositoryHookService;
 
-    public YaccPreReceiveHook(YaccService yaccService,
+    public YaccGlobalHook(YaccService yaccService,
                               PluginSettingsFactory pluginSettingsFactory,
                               SecurityService securityService,
                               RepositoryHookService repositoryHookService) {
