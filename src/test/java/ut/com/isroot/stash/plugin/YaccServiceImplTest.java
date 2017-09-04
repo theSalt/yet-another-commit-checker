@@ -3,7 +3,6 @@ package ut.com.isroot.stash.plugin;
 import com.atlassian.bitbucket.auth.AuthenticationContext;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.RefChangeType;
-import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.user.ApplicationUser;
 import com.atlassian.bitbucket.user.UserType;
 import com.google.common.collect.Lists;
@@ -17,6 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import ut.com.isroot.stash.plugin.mock.MapBackedSettings;
 import ut.com.isroot.stash.plugin.mock.MockRefChange;
 
 import java.util.List;
@@ -36,16 +36,19 @@ import static org.mockito.Mockito.when;
 public class YaccServiceImplTest {
     @Mock private AuthenticationContext stashAuthenticationContext;
     @Mock private JiraService jiraService;
-    @Mock private Settings settings;
     @Mock private ApplicationUser stashUser;
+
+    private MapBackedSettings settings;
 
     private YaccService yaccService;
 
     @Before
     public void setup() {
-        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel","DEBUG");
+        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "DEBUG");
 
         MockitoAnnotations.initMocks(this);
+
+        settings = new MapBackedSettings();
 
         yaccService = new YaccServiceImpl(stashAuthenticationContext, jiraService,
                 null);
@@ -55,7 +58,7 @@ public class YaccServiceImplTest {
 
     @Test
     public void testCheckCommit_requireMatchingAuthorName_rejectOnMismatch() throws Exception {
-        when(settings.getBoolean("requireMatchingAuthorName", false)).thenReturn(true);
+        settings.set("requireMatchingAuthorName", true);
         when(stashUser.getType()).thenReturn(UserType.NORMAL);
         when(stashUser.getDisplayName()).thenReturn("John Smith");
 
@@ -69,7 +72,7 @@ public class YaccServiceImplTest {
 
     @Test
     public void testCheckCommit_requireMatchingAuthorName_allowOnMatch() throws Exception {
-        when(settings.getBoolean("requireMatchingAuthorName", false)).thenReturn(true);
+        settings.set("requireMatchingAuthorName", true);
         when(stashUser.getType()).thenReturn(UserType.NORMAL);
         when(stashUser.getDisplayName()).thenReturn("John Smith");
 
@@ -82,7 +85,7 @@ public class YaccServiceImplTest {
 
     @Test
     public void testCheckCommit_requireMatchingAuthorName_notCaseSensitive() throws Exception {
-        when(settings.getBoolean("requireMatchingAuthorName", false)).thenReturn(true);
+        settings.set("requireMatchingAuthorName", true);
         when(stashUser.getType()).thenReturn(UserType.NORMAL);
         when(stashUser.getDisplayName()).thenReturn("John SMITH");
 
@@ -95,7 +98,7 @@ public class YaccServiceImplTest {
 
     @Test
     public void testCheckCommit_requireMatchingAuthorName_crudIsIgnored() throws Exception {
-        when(settings.getBoolean("requireMatchingAuthorName", false)).thenReturn(true);
+        settings.set("requireMatchingAuthorName", true);
         when(stashUser.getType()).thenReturn(UserType.NORMAL);
         when(stashUser.getDisplayName()).thenReturn(".,:;<>\"\\'John< >\nSMITH.,:;<>\"\\'");
 
@@ -108,7 +111,7 @@ public class YaccServiceImplTest {
 
     @Test
     public void testCheckCommit_requireMatchingAuthorEmail_rejectOnMismatch() throws Exception {
-        when(settings.getBoolean("requireMatchingAuthorEmail", false)).thenReturn(true);
+        settings.set("requireMatchingAuthorEmail", true);
         when(stashUser.getType()).thenReturn(UserType.NORMAL);
         when(stashUser.getEmailAddress()).thenReturn("correct@email.com");
 
@@ -122,7 +125,7 @@ public class YaccServiceImplTest {
 
     @Test
     public void testCheckCommit_requireMatchingAuthorEmail_allowOnMatch() throws Exception {
-        when(settings.getBoolean("requireMatchingAuthorEmail", false)).thenReturn(true);
+        settings.set("requireMatchingAuthorEmail", true);
         when(stashUser.getType()).thenReturn(UserType.NORMAL);
         when(stashUser.getEmailAddress()).thenReturn("correct@email.com");
 
@@ -135,7 +138,7 @@ public class YaccServiceImplTest {
 
     @Test
     public void testCheckCommit_requireMatchingAuthorEmail_notCaseSensitive() throws Exception {
-        when(settings.getBoolean("requireMatchingAuthorEmail", false)).thenReturn(true);
+        settings.set("requireMatchingAuthorEmail", true);
         when(stashUser.getType()).thenReturn(UserType.NORMAL);
         when(stashUser.getEmailAddress()).thenReturn("correct@email.com");
 
@@ -145,10 +148,11 @@ public class YaccServiceImplTest {
         List<YaccError> errors = yaccService.checkCommit(settings, commit, null);
         assertThat(errors).isEmpty();
     }
+
     @Test
     public void testCheckCommit_requireMatchingAuthorEmailRegex_rejectOnMismatch() throws Exception {
-        when(settings.getBoolean("requireMatchingAuthorEmail", false)).thenReturn(false);
-        when(settings.getString("committerEmailRegex")).thenReturn("correct@email.com");
+        settings.set("requireMatchingAuthorEmail", false);
+        settings.set("committerEmailRegex", "correct@email.com");
         when(stashUser.getType()).thenReturn(UserType.NORMAL);
         when(stashUser.getEmailAddress()).thenReturn("wrong@email.com");
 
@@ -157,14 +161,16 @@ public class YaccServiceImplTest {
 
         List<YaccError> errors = yaccService.checkCommit(settings, commit, null);
         assertThat(errors).contains(new YaccError(YaccError.Type.COMMITTER_EMAIL_REGEX,
-                    String.format("committer email regex '%s' does not match user email '%s'",
-                            settings.getString("committerEmailRegex"),
-                    commit.getCommitter().getEmailAddress())));
+                String.format("committer email regex '%s' does not match user email '%s'",
+                        settings.getString("committerEmailRegex"),
+                        commit.getCommitter().getEmailAddress())));
     }
+
     @Test
     public void testCheckCommit_requireMatchingAuthorEmailRegex_allowOnMatch() throws Exception {
-        when(settings.getBoolean("requireMatchingAuthorEmail", false)).thenReturn(false);
-        when(settings.getString("committerEmailRegex")).thenReturn(".*\\@email.com");
+        settings.set("requireMatchingAuthorEmail", false);
+        settings.set("committerEmailRegex", ".*\\@email.com");
+
         when(stashUser.getType()).thenReturn(UserType.NORMAL);
         when(stashUser.getEmailAddress()).thenReturn("correct@email.com");
 
@@ -174,12 +180,14 @@ public class YaccServiceImplTest {
         List<YaccError> errors = yaccService.checkCommit(settings, commit, null);
         assertThat(errors).isEmpty();
     }
+
     @Test
     public void testCheckCommit_serviceUser_skipped() {
-        when(settings.getBoolean("requireMatchingAuthorName", false)).thenReturn(true);
-        when(settings.getBoolean("requireMatchingAuthorEmail", false)).thenReturn(true);
+        settings.set("requireMatchingAuthorName", true);
+        settings.set("requireMatchingAuthorEmail", true);
+
         when(stashUser.getType()).thenReturn(UserType.SERVICE);
-        
+
         YaccCommit commit = mockCommit();
         when(commit.getCommitter().getEmailAddress()).thenReturn("CoRrect@EMAIL.com");
 
@@ -191,7 +199,7 @@ public class YaccServiceImplTest {
 
     @Test
     public void testCheckCommit_requireJiraIssue_rejectIfEnabledButNoJiraLinkExists() throws Exception {
-        when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
+        settings.set("requireJiraIssue", true);
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(false);
 
         List<YaccError> errors = yaccService.checkCommit(settings, mockCommit(), null);
@@ -200,7 +208,7 @@ public class YaccServiceImplTest {
 
     @Test
     public void testCheckCommit_requireJiraIssue_rejectIfNoJiraIssuesAreFound() {
-        when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
+        settings.set("requireJiraIssue", true);
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
 
         YaccCommit commit = mockCommit();
@@ -212,8 +220,8 @@ public class YaccServiceImplTest {
 
     @Test
     public void testCheckCommit_requireJiraIssue_ignoreUnknownJiraProjectKeys() throws Exception {
-        when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
-        when(settings.getBoolean("ignoreUnknownIssueProjectKeys", false)).thenReturn(true);
+        settings.set("requireJiraIssue", true);
+        settings.set("ignoreUnknownIssueProjectKeys", true);
 
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
         when(jiraService.doesProjectExist(new IssueKey("ABC", "123"))).thenReturn(true);
@@ -226,12 +234,14 @@ public class YaccServiceImplTest {
         assertThat(errors).isEmpty();
         verify(jiraService).doesJiraApplicationLinkExist();
         verify(jiraService).doesIssueExist(new IssueKey("ABC-123"));
+        verify(jiraService).doesProjectExist(new IssueKey("ABC-123"));
+        verify(jiraService).doesProjectExist(new IssueKey("UTF-8"));
     }
 
     @Test
     public void testCheckCommit_requireJiraIssue_rejectIfNoJiraIssuesWithAValidProjectAreFound() throws Exception {
-        when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
-        when(settings.getBoolean("ignoreUnknownIssueProjectKeys", false)).thenReturn(true);
+        settings.set("requireJiraIssue", true);
+        settings.set("ignoreUnknownIssueProjectKeys", true);
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
         when(jiraService.doesProjectExist(new IssueKey("UTF", "8"))).thenReturn(false);
 
@@ -244,7 +254,7 @@ public class YaccServiceImplTest {
 
     @Test
     public void testCheckCommit_requireJiraIssue_allowedIfValidJiraIssueIsFound() throws Exception {
-        when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
+        settings.set("requireJiraIssue", true);
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
 
         YaccCommit commit = mockCommit();
@@ -258,7 +268,7 @@ public class YaccServiceImplTest {
 
     @Test
     public void testCheckCommit_requireJiraIssue_jiraIssueIdsAreExtractedFromCommitMessage() throws Exception {
-        when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
+        settings.set("requireJiraIssue", true);
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
 
         YaccCommit commit = mockCommit();
@@ -272,7 +282,7 @@ public class YaccServiceImplTest {
 
     @Test
     public void testCheckCommit_requireJiraIssue_errorsPassedThroughIfTheyAreReturned() {
-        when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
+        settings.set("requireJiraIssue", true);
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
         when(jiraService.doesIssueExist(any(IssueKey.class)))
                 .thenReturn(Lists.newArrayList(new YaccError("some error")));
@@ -287,7 +297,7 @@ public class YaccServiceImplTest {
 
     @Test
     public void testCheckCommit_commitMessageRegex_commitMessageMatchesRegex() throws Exception {
-        when(settings.getString("commitMessageRegex")).thenReturn("[a-z ]+");
+        settings.set("commitMessageRegex", "[a-z ]+");
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
 
         YaccCommit commit = mockCommit();
@@ -299,146 +309,139 @@ public class YaccServiceImplTest {
 
     @Test
     public void testCheckCommit_commitMessageRegex_rejectIfCommitMessageDoesNotMatchRegex() throws Exception {
-        when(settings.getString("commitMessageRegex")).thenReturn("[a-z ]+");
+        settings.set("commitMessageRegex", "[a-z ]+");
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
 
         YaccCommit commit = mockCommit();
         when(commit.getMessage()).thenReturn("123 does not match regex because it contains numbers");
 
-        List<YaccError> errors = yaccService.checkCommit(settings, commit,null);
+        List<YaccError> errors = yaccService.checkCommit(settings, commit, null);
         assertThat(errors).containsOnly(new YaccError(YaccError.Type.COMMIT_REGEX,
                 "commit message doesn't match regex: [a-z ]+"));
     }
 
     @Test
-    public void testCheckCommit_excludeByRegex_commitAllowedIfRegexMatches() {
-        when(settings.getString("commitMessageRegex")).thenReturn("foo");
-        when(settings.getString("excludeByRegex")).thenReturn("#skipcheck");
+    public void testCheckCommit_excludeByRegex() {
+        settings.set("commitMessageRegex", "foo");
 
-        YaccCommit commit = mockCommit();
-        when(commit.getMessage()).thenReturn("this commit will be allowed #skipcheck");
-
-        List<YaccError> errors = yaccService.checkCommit(settings, commit,  null);
-        assertThat(errors).isEmpty();
-
-        verify(settings).getString("excludeByRegex");
-    }
-
-    @Test
-    public void testCheckCommit_excludeByRegex_commitNotAllowedIfRegexDoesNotMatch() {
-        when(settings.getString("commitMessageRegex")).thenReturn("foo");
-        when(settings.getString("excludeByRegex")).thenReturn("#skipcheck");
-
+        // First verify that commit will be rejected
         YaccCommit commit = mockCommit();
         when(commit.getMessage()).thenReturn("this commit will be rejected");
 
+        assertThat(yaccService.checkCommit(settings, commit, null))
+                .isNotEmpty();
+
+        settings.set("excludeByRegex", "#skipcheck");
+
+        // Commit will be allowed if #skipcheck is present
+        commit = mockCommit();
+        when(commit.getMessage()).thenReturn("this commit will be allowed #skipcheck");
+
         List<YaccError> errors = yaccService.checkCommit(settings, commit, null);
-        assertThat(errors).isNotEmpty();
+        assertThat(errors).isEmpty();
     }
 
     @Test
-    public void testCheckCommit_excludeBranchRegex_commitNotAllowedIfNoJiraIssuesAndBranchIsNotExcluded() {
-        when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
-        when(jiraService.doesJiraApplicationLinkExist()).thenReturn(true);
-        when(settings.getString("excludeBranchRegex")).thenReturn("skipcheck");
+    public void testCheckCommit_excludeBranchRegex() {
+        settings.set("commitMessageRegex", "[A-Z0-9\\-]+: .*");
+        settings.set("excludeBranchRegex", "branch-name-excluded");
 
         YaccCommit commit = mockCommit();
-        when(commit.getMessage()).thenReturn("this commit message has no jira issues.");
+        when(commit.getMessage()).thenReturn("this commit should be rejected due to message regex");
 
-        List<YaccError> errors = yaccService.checkCommit(settings, commit, "NoSkipcheck");
-        assertThat(errors).containsOnly(new YaccError("No JIRA Issue found in commit message."));
-        verify(settings).getString("excludeBranchRegex");
+        assertThat(yaccService.checkCommit(settings, commit, "branch-name"))
+                .isNotEmpty();
+
+        assertThat(yaccService.checkCommit(settings, commit, "branch-name-excluded"))
+                .isEmpty();
     }
 
     @Test
     public void testCheckCommit_excludeBranchRegex_regexMustMatchFullBranchName() {
-        when(settings.getString("commitMessageRegex")).thenReturn("[A-Z0-9\\-]+: .*");
-        when(settings.getString("excludeBranchRegex")).thenReturn("skipcheck");
+        settings.set("commitMessageRegex", "[A-Z0-9\\-]+: .*");
+        settings.set("excludeBranchRegex", "[a-z]+");
 
         YaccCommit commit = mockCommit();
-        when(commit.getMessage()).thenReturn("this commit message has no jira issues.");
+        when(commit.getMessage()).thenReturn("should be rejected");
 
-        List<YaccError> errors = yaccService.checkCommit(settings, commit, "some-branch-skipcheck");
+        List<YaccError> errors = yaccService.checkCommit(settings, commit, "branch_0");
         assertThat(errors).containsOnly(new YaccError(YaccError.Type.COMMIT_REGEX,
                 "commit message doesn't match regex: [A-Z0-9\\-]+: .*"));
-        verify(settings).getString("excludeBranchRegex");
-    }
-
-    @Test
-    public void testCheckCommit_excludeBranchRegex_commitAllowedIfNoJiraIssuesAndBranchIsExcluded() {
-        when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
-        when(settings.getString("excludeBranchRegex")).thenReturn("skipcheck");
-
-        YaccCommit commit = mockCommit();
-        when(commit.getMessage()).thenReturn("no JIRA issues but will be allowed anyway");
-
-        List<YaccError> errors = yaccService.checkCommit(settings, commit, "skipcheck");
-        assertThat(errors).isEmpty();
-        verify(settings).getString("excludeBranchRegex");
     }
 
     @Test
     public void testCheckCommit_excludeMergeCommits() {
-        when(settings.getString("commitMessageRegex")).thenReturn("foo");
-        when(settings.getBoolean("excludeMergeCommits",false)).thenReturn(true);
+        settings.set("commitMessageRegex", "foo");
 
         YaccCommit commit = mockCommit();
         when(commit.getMessage()).thenReturn("This is a merge commit");
         when(commit.isMerge()).thenReturn(true);
 
-        List<YaccError> errors = yaccService.checkCommit(settings, commit, null);
-        assertThat(errors).isEmpty();
+        // Should be rejected by default
+        assertThat(yaccService.checkCommit(settings, commit, null))
+                .isNotEmpty();
 
-        verify(settings).getBoolean("excludeMergeCommits", false);
+        settings.set("excludeMergeCommits", true);
+
+        assertThat(yaccService.checkCommit(settings, commit, null))
+                .isEmpty();
     }
 
     @Test
-    public void testCheckCommit_excludeServiceUserCommitsWithInvalidCommitMessage() {
-        when(settings.getString("commitMessageRegex")).thenReturn("[a-z ]+");
-        when(settings.getBoolean("excludeServiceUserCommits", false)).thenReturn(true);
-
-        when(stashUser.getType()).thenReturn(UserType.SERVICE);
+    public void testCheckCommit_excludeServiceUserCommits() {
+        settings.set("commitMessageRegex", "[a-z ]+");
+        settings.set("excludeServiceUserCommits", true);
 
         YaccCommit commit = mockCommit();
         when(commit.getMessage()).thenReturn("123 does not match regex because it contains numbers");
 
-        List<YaccError> errors = yaccService.checkCommit(settings,commit,null);
-        assertThat(errors).isEmpty();
-        verify(settings).getBoolean("excludeServiceUserCommits", false);
-    }
-
-    @Test
-    public void testCheckCommit_excludeUserCommitsWithInvalidCommitMessage() {
-        when(settings.getString("commitMessageRegex")).thenReturn("[a-z ]+");
-        when(settings.getString("excludeUsers")).thenReturn("excludeUser, nonExcludeUser");
-
+        // normal user is rejected
         when(stashUser.getType()).thenReturn(UserType.NORMAL);
-        when(stashUser.getName()).thenReturn("excludeUser");
+        assertThat(yaccService.checkCommit(settings, commit, null))
+                .isNotEmpty();
+
+        // service user is not
+        when(stashUser.getType()).thenReturn(UserType.SERVICE);
+        assertThat(yaccService.checkCommit(settings, commit, null))
+                .isEmpty();
+    }
+
+    @Test
+    public void testCheckCommit_excludeUsers() {
+        settings.set("commitMessageRegex", "[a-z ]+");
+        settings.set("excludeUsers", "excludeUser, anotherUser");
 
         YaccCommit commit = mockCommit();
         when(commit.getMessage()).thenReturn("123 does not match regex because it contains numbers");
 
-        List<YaccError> errors = yaccService.checkCommit(settings, commit, null);
-        assertThat(errors).isEmpty();
-        verify(settings).getString("excludeUsers");
+        // commit rejected because user is not excluded
+        when(stashUser.getType()).thenReturn(UserType.NORMAL);
+        when(stashUser.getName()).thenReturn("notExcluded");
+        assertThat(yaccService.checkCommit(settings, commit, null))
+                .isNotEmpty();
+
+        // commit allowed because user is not excluded
+        when(stashUser.getName()).thenReturn("excludeUser");
+        assertThat(yaccService.checkCommit(settings, commit, null))
+                .isEmpty();
     }
 
     @Test
     public void testCheckRefChange_branchNameRegex_branchRejectedIfDoesNotMatchRegex() {
-        when(settings.getString("branchNameRegex")).thenReturn("foo");
-
+        settings.set("branchNameRegex", "foo");
+        
         RefChange refChange = mockRefAdd();
 
         List<YaccError> errors = yaccService.checkRefChange(null, settings, refChange);
 
         assertThat(errors)
-                .containsOnly(new YaccError(YaccError.Type.BRANCH_NAME,
+            .containsOnly(new YaccError(YaccError.Type.BRANCH_NAME,
                         "refs/heads/master: Invalid branch name. 'master' does not match regex 'foo'"));
     }
 
     @Test
     public void testCheckRefChange_branchNameRegex_branchAllowedIfItAlreadyExists() {
-        when(settings.getString("branchNameRegex")).thenReturn("foo");
+        settings.set("branchNameRegex", "foo");
 
         RefChange refChange = mockRefChange();
 

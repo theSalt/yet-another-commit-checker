@@ -212,6 +212,7 @@ public class YaccServiceImpl implements YaccService {
             Pattern pattern = Pattern.compile(excludeRegex);
             Matcher matcher = pattern.matcher(commit.getMessage());
             if (matcher.find()) {
+                log.debug("commit excluded because excludeByRegex={} matches", excludeRegex);
                 return true;
             }
         }
@@ -304,7 +305,13 @@ public class YaccServiceImpl implements YaccService {
 
         final List<IssueKey> issues;
         final List<IssueKey> extractedKeys = extractJiraIssuesFromCommitMessage(settings, commit);
-        if (settings.getBoolean("ignoreUnknownIssueProjectKeys", false)) {
+
+        final boolean ignoreUnknownProjectKeys = settings
+                .getBoolean("ignoreUnknownIssueProjectKeys", false);
+
+        log.debug("ignoreUnknownIssueProjectKeys={}", ignoreUnknownProjectKeys);
+
+        if (ignoreUnknownProjectKeys) {
             /* Remove issues that contain non-existent project keys */
             issues = Lists.newArrayList();
             for (IssueKey issueKey : extractedKeys) {
@@ -329,6 +336,8 @@ public class YaccServiceImpl implements YaccService {
 
     private List<YaccError> checkJiraIssue(Settings settings, IssueKey issueKey) {
         List<YaccError> errors = Lists.newArrayList();
+
+        log.debug("checking JIRA issue={}", issueKey);
 
         errors.addAll(jiraService.doesIssueExist(issueKey));
 

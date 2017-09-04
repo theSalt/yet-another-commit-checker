@@ -60,6 +60,6 @@ public class MockSettingsBuilder implements SettingsBuilder {
     @Nonnull
     @Override
     public Settings build() {
-        return new MockSettings(builder.build());
+        return new MapBackedSettings(builder.build());
     }
 }

@@ -2,7 +2,6 @@ package ut.com.isroot.stash.plugin.mock;
 
 import com.atlassian.bitbucket.setting.Settings;
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.ImmutableMap;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -15,15 +14,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @author Sean Ford
  * @since 2015-09-14
  */
-public class MockSettings implements Settings {
+public class MapBackedSettings implements Settings {
     private final Map<String, Object> values;
 
-    public MockSettings() {
+    public MapBackedSettings() {
         this.values = new HashMap<>();
     }
 
-    public MockSettings(Map<String, Object> values) {
-        this.values = ImmutableMap.copyOf(values);
+    public MapBackedSettings(Map<String, Object> values) {
+        this.values = new HashMap<>(values);
+    }
+
+    public void set(String key, Object value) {
+        values.put(key, value);
     }
 
     @SuppressWarnings("unchecked")
@@ -47,12 +50,13 @@ public class MockSettings implements Settings {
     @Nullable
     @Override
     public Boolean getBoolean(String s) {
-        return null;
+        return (Boolean)values.get(s);
     }
 
     @Override
-    public boolean getBoolean(String s, boolean b) {
-        return false;
+    public boolean getBoolean(String s, boolean defaultValue) {
+        Boolean value = getBoolean(s);
+        return MoreObjects.firstNonNull(value, defaultValue);
     }
 
     @Nullable

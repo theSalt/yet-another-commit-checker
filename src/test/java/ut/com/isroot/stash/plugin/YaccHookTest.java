@@ -9,7 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import ut.com.isroot.stash.plugin.mock.MockSettings;
+import ut.com.isroot.stash.plugin.mock.MapBackedSettings;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -33,7 +33,7 @@ public class YaccHookTest {
 
         yaccHook = new YaccHook(yaccService);
 
-        settings = new MockSettings();
+        settings = new MapBackedSettings();
         when(repositoryHookContext.getSettings()).thenReturn(settings);
     }
 
