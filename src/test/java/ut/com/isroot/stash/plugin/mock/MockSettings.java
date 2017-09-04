@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableMap;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -16,6 +17,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class MockSettings implements Settings {
     private final Map<String, Object> values;
+
+    public MockSettings() {
+        this.values = new HashMap<>();
+    }
 
     public MockSettings(Map<String, Object> values) {
         this.values = ImmutableMap.copyOf(values);
