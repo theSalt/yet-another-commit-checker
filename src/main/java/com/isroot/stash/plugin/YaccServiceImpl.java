@@ -58,7 +58,10 @@ public class YaccServiceImpl implements YaccService {
             RepositoryPushHookRequest repositoryPushHookRequest, Settings settings) {
         log.debug("YaccHook preUpdate, registering commit callback. settings={}", settings);
 
-        List<YaccError> errors = checkRefs(settings, repositoryPushHookRequest.getRefChanges());
+        Repository repository = repositoryPushHookRequest.getRepository();
+
+        List<YaccError> errors = checkRefs(repository, settings,
+                repositoryPushHookRequest.getRefChanges());
         if (!errors.isEmpty()) {
             YaccErrorBuilder errorBuilder = new YaccErrorBuilder(settings);
             String message = errorBuilder.getErrorMessage(errors);
@@ -74,7 +77,8 @@ public class YaccServiceImpl implements YaccService {
         return RepositoryHookResult.accepted();
     }
 
-    private List<YaccError> checkRefs(Settings settings, Collection<RefChange> refChanges) {
+    private List<YaccError> checkRefs(Repository repository, Settings settings,
+            Collection<RefChange> refChanges) {
         List<YaccError> errors = new ArrayList<>();
 
         for (RefChange refChange : refChanges) {
@@ -82,7 +86,7 @@ public class YaccServiceImpl implements YaccService {
                     refChange.getRef(), refChange.getRef().getType(), refChange.getType(),
                     refChange.getFromHash(), refChange.getToHash());
 
-            errors = checkRefChange(null, settings, refChange);
+            errors = checkRefChange(repository, settings, refChange);
         }
 
         return errors;
@@ -146,6 +150,8 @@ public class YaccServiceImpl implements YaccService {
     private List<YaccError> checkAnnotatedTag(Repository repository, Settings settings,
             RefChange refChange) {
         List<YaccError> errors = new ArrayList<>();
+
+        log.info("checking annotated tags");
 
         GitResolveAnnotatedTagsCommandParameters params =
                 new GitResolveAnnotatedTagsCommandParameters.Builder()
