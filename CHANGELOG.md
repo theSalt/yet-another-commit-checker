@@ -1,5 +1,9 @@
 # YACC Changelog
 
+### 1.18 (2017-10-03)
+
+* Bugfix: Fix pushing annotated tags.
+
 ### 1.17 (2017-09-10)
 
 * Performance: Use new [BBS 5 Hook APIs](https://developer.atlassian.com/bitbucket/server/docs/latest/how-tos/hooks-merge-checks-guide.html) to obtain new commits to avoid calling out to git. 
