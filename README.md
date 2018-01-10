@@ -175,6 +175,14 @@ commit by doing:
     # Reset both author and committer
     git commit --amend --reset-author
 
+#### How do I opt-out a repository from YACC when I have global settings configured?
+
+If you have global YACC settings configured, you can opt-out a specific repository from YACC by *enabling* the hook on the repository and while keeping all settings *blank*. Global settings won't be applied in this case, and YACC won't do anything because settings are blank.
+
+#### How do I configure and manage YACC settings for a large number of repositories?
+
+While YACC is fully configurable through the BitBucket Server UI, it can also be configured using the [BitBucket Server REST API](https://docs.atlassian.com/bitbucket-server/rest/5.6.2/bitbucket-rest.html#idm46036344169104). The REST API can be easily automated, which can be helpful if you need to manage a large number of repositories that have different settings from each other (ie, global YACC settings can not be used).
+
 ## Development
 
 Interested in contributing? [Fork me!](https://github.com/sford/yet-another-commit-checker)
