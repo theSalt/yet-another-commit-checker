@@ -1,8 +1,30 @@
 package ut.com.isroot.stash.plugin;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.stubbing.Answer;
+
 import com.atlassian.bitbucket.auth.AuthenticationContext;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.RefChangeType;
+import com.atlassian.bitbucket.repository.Repository;
+import com.atlassian.bitbucket.repository.StandardRefType;
+import com.atlassian.bitbucket.scm.git.command.GitCommand;
+import com.atlassian.bitbucket.scm.git.command.GitRefCommandFactory;
+import com.atlassian.bitbucket.scm.git.ref.GitAnnotatedTagCallback;
+import com.atlassian.bitbucket.scm.git.ref.GitResolveAnnotatedTagsCommandParameters;
 import com.atlassian.bitbucket.user.ApplicationUser;
 import com.atlassian.bitbucket.user.UserType;
 import com.google.common.collect.Lists;
@@ -12,22 +34,10 @@ import com.isroot.stash.plugin.YaccCommit;
 import com.isroot.stash.plugin.YaccService;
 import com.isroot.stash.plugin.YaccServiceImpl;
 import com.isroot.stash.plugin.errors.YaccError;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+
+import ut.com.isroot.stash.plugin.mock.MockGitAnnotatedTag;
 import ut.com.isroot.stash.plugin.mock.MockRefChange;
 import ut.com.isroot.stash.plugin.mock.MutableYaccSettings;
-
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Sean Ford
@@ -35,6 +45,7 @@ import static org.mockito.Mockito.when;
  */
 public class YaccServiceImplTest {
     @Mock private AuthenticationContext stashAuthenticationContext;
+    @Mock private GitRefCommandFactory gitRefCommandFactory;
     @Mock private JiraService jiraService;
     @Mock private ApplicationUser stashUser;
 
@@ -47,11 +58,10 @@ public class YaccServiceImplTest {
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "DEBUG");
 
         MockitoAnnotations.initMocks(this);
-
         settings = new MutableYaccSettings();
 
         yaccService = new YaccServiceImpl(stashAuthenticationContext, jiraService,
-                null);
+        		gitRefCommandFactory);
 
         when(stashAuthenticationContext.getCurrentUser()).thenReturn(stashUser);
     }
@@ -449,6 +459,51 @@ public class YaccServiceImplTest {
 
         assertThat(errors).isEmpty();
     }
+    
+    @Test
+    public void testCheckAnnotatedTag_normalUser_valid() {
+    	settings.setRequireMatchingAuthorName(true);
+    	settings.setRequireMatchingAuthorEmail(true);
+        when(stashUser.getDisplayName()).thenReturn("John Smith");
+    	
+        prepareGitRefCommandFactory(new MockGitAnnotatedTag("John Smith", "jsmith@example.com"));
+    	when(stashUser.getType()).thenReturn(UserType.NORMAL);
+    	RefChange refChange = mockRefAddTag();
+    	
+    	List<YaccError> errors = yaccService.checkRefChange(null, settings, refChange);
+        assertThat(errors).isEmpty();
+    }
+    
+    @Test
+    public void testCheckAnnotatedTag_normalUser_invalid() {
+    	settings.setRequireMatchingAuthorName(true);
+    	settings.setRequireMatchingAuthorEmail(true);
+        when(stashUser.getDisplayName()).thenReturn("John Smith");
+    	
+        prepareGitRefCommandFactory(new MockGitAnnotatedTag("Incorrect Name", "jsmith@example.com"));
+    	when(stashUser.getType()).thenReturn(UserType.NORMAL);
+    	RefChange refChange = mockRefAddTag();
+    	
+    	List<YaccError> errors = yaccService.checkRefChange(null, settings, refChange);
+        assertThat(errors).containsOnly(new YaccError(YaccError.Type.COMMITTER_NAME,
+                "refs/tags/v1.0.0: expected committer name 'John Smith' but found 'Incorrect Name'"));
+    }
+    
+    @Test
+    public void testCheckAnnotatedTag_serviceUser_skipped() {
+        settings.setRequireMatchingAuthorName(true);
+        settings.setRequireMatchingAuthorEmail(true);
+        
+        prepareGitRefCommandFactory(new MockGitAnnotatedTag("Access Key User", ""));
+        when(stashUser.getType()).thenReturn(UserType.SERVICE);
+        RefChange refChange = mockRefAddTag();
+
+        
+        List<YaccError> errors = yaccService.checkRefChange(null, settings, refChange);
+        assertThat(errors).isEmpty();
+        verify(stashUser, never()).getDisplayName();
+        verify(stashUser, never()).getEmailAddress();
+    }
 
     private YaccCommit mockCommit() {
         YaccCommit commit = mock(YaccCommit.class, RETURNS_DEEP_STUBS);
@@ -467,6 +522,17 @@ public class YaccServiceImplTest {
         refChange.setType(RefChangeType.ADD);
         return refChange;
     }
+    
+    private MockRefChange mockRefAddTag() {
+        MockRefChange refChange = new MockRefChange();
+        refChange.setFromHash("0000000000000000000000000000000000000000");
+        refChange.setToHash("35d938b060bb361503e021f228e43351f1a71551");
+        refChange.setRefId("refs/tags/v1.0.0");
+        refChange.setType(RefChangeType.ADD);
+        refChange.setRefType(StandardRefType.TAG);
+        
+        return refChange;
+    }
 
     private MockRefChange mockRefChange() {
         MockRefChange refChange = new MockRefChange();
@@ -476,4 +542,13 @@ public class YaccServiceImplTest {
         refChange.setType(RefChangeType.UPDATE);
         return refChange;
     }
+    
+	private void prepareGitRefCommandFactory(MockGitAnnotatedTag gitAnnotatedTag) {
+		when(gitRefCommandFactory.resolveAnnotatedTags(any(Repository.class), any(GitResolveAnnotatedTagsCommandParameters.class), any(GitAnnotatedTagCallback.class))).thenAnswer((Answer<?>) invocation -> {
+    		GitAnnotatedTagCallback callback = invocation.getArgumentAt(2, GitAnnotatedTagCallback.class);
+    		callback.onTag(gitAnnotatedTag);
+    		
+    		return mock(GitCommand.class);
+    	});
+	}
 }
