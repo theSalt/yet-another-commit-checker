@@ -167,7 +167,10 @@ public class YaccServiceImpl implements YaccService {
                 YaccCommit yaccCommit = new YaccCommit(gitAnnotatedTag);
 
                 ApplicationUser stashUser = stashAuthenticationContext.getCurrentUser();
-                if (stashUser != null) {
+                // Only validate 'normal' users - service users like
+                // the ssh access keys use the key comment as the 'name' and don't have emails
+                // Neither of these are useful to validate, so just skip them
+                if (stashUser != null && stashUser.getType() == UserType.NORMAL) {
                     errors.addAll(checkCommitterName(settings, yaccCommit, stashUser));
                     errors.addAll(checkCommitterEmail(settings, yaccCommit, stashUser));
                 }

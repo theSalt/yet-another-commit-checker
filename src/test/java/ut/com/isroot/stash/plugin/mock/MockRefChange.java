@@ -96,4 +96,9 @@ public class MockRefChange implements RefChange {
         this.type = type;
         return this;
     }
+    
+    public MockRefChange setRefType(RefType refType) {
+        this.refType = refType;
+        return this;
+    }
 }
