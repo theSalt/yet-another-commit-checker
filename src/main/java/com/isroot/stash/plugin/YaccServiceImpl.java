@@ -120,20 +120,7 @@ public class YaccServiceImpl implements YaccService {
 
         List<YaccError> errors = Lists.newArrayList();
 
-        ApplicationUser stashUser = stashAuthenticationContext.getCurrentUser();
-
-        if (stashUser == null) {
-            // This should never happen
-            log.warn("Unauthenticated user is committing - skipping committer validate checks");
-        } else {
-            // Only validate 'normal' users - service users like
-            // the ssh access keys use the key comment as the 'name' and don't have emails
-            // Neither of these are useful to validate, so just skip them
-            if (stashUser.getType() == UserType.NORMAL) {
-                errors.addAll(checkCommitterEmail(settings, commit, stashUser));
-                errors.addAll(checkCommitterName(settings, commit, stashUser));
-            }
-        }
+        errors.addAll(checkCommitter(settings, commit));
 
         if (!isCommitExcluded(settings, commit) && !isBranchExcluded(settings, branchName)) {
             errors.addAll(checkCommitMessageRegex(settings, commit));
@@ -166,14 +153,8 @@ public class YaccServiceImpl implements YaccService {
 
                 YaccCommit yaccCommit = new YaccCommit(gitAnnotatedTag);
 
-                ApplicationUser stashUser = stashAuthenticationContext.getCurrentUser();
-                // Only validate 'normal' users - service users like
-                // the ssh access keys use the key comment as the 'name' and don't have emails
-                // Neither of these are useful to validate, so just skip them
-                if (stashUser != null && stashUser.getType() == UserType.NORMAL) {
-                    errors.addAll(checkCommitterName(settings, yaccCommit, stashUser));
-                    errors.addAll(checkCommitterEmail(settings, yaccCommit, stashUser));
-                }
+                errors.addAll(checkCommitter(settings, yaccCommit));
+
                 return true;
             }
         };
@@ -355,6 +336,28 @@ public class YaccServiceImpl implements YaccService {
 
             if (jqlQuery != null && !jqlQuery.isEmpty()) {
                 errors.addAll(jiraService.doesIssueMatchJqlQuery(jqlQuery, issueKey));
+            }
+        }
+
+        return errors;
+    }
+
+    private List<YaccError> checkCommitter(Settings settings, YaccCommit commit) {
+        List<YaccError> errors = new ArrayList<>();
+
+        ApplicationUser stashUser = stashAuthenticationContext.getCurrentUser();
+
+        if (stashUser == null) {
+            // This should never happen. User returned by getCurrentUser is
+            // marked as nullable though.
+            log.warn("Unauthenticated user is committing - skipping committer validate checks");
+        } else {
+            // Only validate 'normal' users - service users like
+            // the ssh access keys use the key comment as the 'name' and don't have emails
+            // Neither of these are useful to validate, so just skip them
+            if (stashUser.getType() == UserType.NORMAL) {
+                errors.addAll(checkCommitterEmail(settings, commit, stashUser));
+                errors.addAll(checkCommitterName(settings, commit, stashUser));
             }
         }
 
