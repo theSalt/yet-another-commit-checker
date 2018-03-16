@@ -2,14 +2,8 @@ language: java
 jdk:
   - oraclejdk8 
 before_install:
-  - sudo apt-get update
-  - sudo apt-get install apt-transport-https
-  - echo "deb https://sdkrepo.atlassian.com/debian/ stable contrib" | sudo tee -a /etc/apt/sources.list
-  - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys B07804338C015B73
-  - sudo apt-get update
-  - sudo apt-get install atlassian-plugin-sdk
-  - export DISPLAY=:99.0
-  - sh -e /etc/init.d/xvfb start
+  - curl https://packages.atlassian.com/list/atlassian-sdk-deb/deb-archive/atlassian-plugin-sdk_6.3.7_all.deb -O
+  - sudo dpkg -i ./atlassian-plugin-sdk_6.3.7_all.deb
 install:
   - atlas-mvn -q install -DskipTests=true
 script: atlas-unit-test
