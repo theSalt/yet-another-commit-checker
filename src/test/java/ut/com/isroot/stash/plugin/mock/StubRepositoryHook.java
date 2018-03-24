@@ -11,15 +11,20 @@ import javax.annotation.Nonnull;
  */
 public class StubRepositoryHook implements RepositoryHook {
     private boolean enabled;
+    private RepositoryHookDetails details;
 
     public StubRepositoryHook() {
         enabled = false;
     }
 
+    public void setDetails(RepositoryHookDetails details) {
+        this.details = details;
+    }
+
     @Nonnull
     @Override
     public RepositoryHookDetails getDetails() {
-        throw new UnsupportedOperationException();
+        return details;
     }
 
     @Override

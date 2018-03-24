@@ -49,9 +49,11 @@ public class YaccBranchCreationListener {
                     }
                 });
 
+        log.debug("yacc repo hook, enabled={}", hook.isEnabled());
+
         Settings settings = null;
 
-        if (hook.isEnabled() && hook.isConfigured()) {
+        if (hook.isEnabled()) {
             // Repository hook is configured and enabled.
             // Repository hook overrides default pre-receive hook configuration
             log.debug("PreReceiveRepositoryHook configured. Use repository configuration.");

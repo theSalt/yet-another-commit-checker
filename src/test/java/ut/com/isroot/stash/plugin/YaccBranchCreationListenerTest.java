@@ -1,7 +1,6 @@
 package ut.com.isroot.stash.plugin;
 
 import com.atlassian.bitbucket.event.branch.BranchCreationRequestedEvent;
-import com.atlassian.bitbucket.hook.repository.RepositoryHook;
 import com.atlassian.bitbucket.hook.repository.RepositoryHookDetails;
 import com.atlassian.bitbucket.hook.repository.RepositoryHookService;
 import com.atlassian.bitbucket.i18n.I18nService;
@@ -13,7 +12,6 @@ import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.setting.SettingsBuilder;
 import com.atlassian.bitbucket.user.EscalatedSecurityContext;
 import com.atlassian.bitbucket.user.SecurityService;
-import com.atlassian.bitbucket.util.CancelState;
 import com.atlassian.bitbucket.util.UncheckedOperation;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
@@ -22,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import ut.com.isroot.stash.plugin.mock.StubRepositoryHook;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +28,10 @@ import java.util.Map;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Hiroyuki Wada
@@ -37,11 +39,10 @@ import static org.mockito.Mockito.*;
  */
 public class YaccBranchCreationListenerTest {
     @Mock private RepositoryHookService repositoryHookService;
-    @Mock private RepositoryHook repositoryHook;
+
     @Mock private RepositoryHookDetails repositoryHookDetails;
     @Mock private Repository repository;
     @Mock private Branch branch;
-    @Mock private CancelState cancelState;
     @Mock private SecurityService securityService;
     @Mock private EscalatedSecurityContext escalatedSecurityContextForRepositoryHook;
     @Mock private EscalatedSecurityContext escalatedSecurityContextForSettings;
@@ -54,31 +55,37 @@ public class YaccBranchCreationListenerTest {
     @Mock private KeyedMessage message;
     private Map<String, Object> settingsMap = new HashMap<String, Object>();
 
+    private StubRepositoryHook repositoryHook;
+
     private YaccBranchCreationListener yaccBranchCreationListener;
 
 
     @Before
-    public void setup() throws Throwable {
+    public void setup() {
         MockitoAnnotations.initMocks(this);
 
         yaccBranchCreationListener = new YaccBranchCreationListener(
                 pluginSettingsFactory, securityService, repositoryHookService, i18nService);
 
+        repositoryHook = new StubRepositoryHook();
+        repositoryHook.setDetails(repositoryHookDetails);
+
         //mock hook retrieval
         when(securityService.withPermission(Permission.REPO_ADMIN, "Get plugin configuration"))
                 .thenReturn(escalatedSecurityContextForRepositoryHook);
-        when(escalatedSecurityContextForRepositoryHook.call(any(UncheckedOperation.class))).thenReturn(repositoryHook);
+        when(escalatedSecurityContextForRepositoryHook.call(any(UncheckedOperation.class)))
+                .thenReturn(repositoryHook);
 
         when(securityService.withPermission(Permission.REPO_ADMIN, "Get hook configuration"))
                 .thenReturn(escalatedSecurityContextForSettings);
-        when(escalatedSecurityContextForSettings.call(any(UncheckedOperation.class))).thenReturn(settings);
+        when(escalatedSecurityContextForSettings.call(any(UncheckedOperation.class)))
+                .thenReturn(settings);
     }
 
     @Test
-    public void testOnBranchCreation_errorIfBranchNameDoesNotMatchRegex_repositoryHookConfigured(){
-        when(repositoryHook.isConfigured()).thenReturn(true);
-        when(repositoryHook.isEnabled()).thenReturn(true);
-        when(repositoryHook.getDetails()).thenReturn(repositoryHookDetails);
+    public void testOnBranchCreation_errorIfBranchNameDoesNotMatchRegex_repositoryHookConfigured() {
+        repositoryHook.setEnabled(true);
+
         when(repositoryHookDetails.getKey()).thenReturn(anyString());
         when(repositoryHookService.getSettings(repository, anyString())).thenReturn(settings);
 
@@ -93,10 +100,9 @@ public class YaccBranchCreationListenerTest {
     }
 
     @Test
-    public void testOnBranchCreation_noErrorIfBranchNameDoesNotMatchRegex_repositoryHookConfigured(){
-        when(repositoryHook.isConfigured()).thenReturn(true);
-        when(repositoryHook.isEnabled()).thenReturn(true);
-        when(repositoryHook.getDetails()).thenReturn(repositoryHookDetails);
+    public void testOnBranchCreation_noErrorIfBranchNameDoesNotMatchRegex_repositoryHookConfigured() {
+        repositoryHook.setEnabled(true);
+
         when(repositoryHookDetails.getKey()).thenReturn(anyString());
         when(repositoryHookService.getSettings(repository, anyString())).thenReturn(settings);
 
