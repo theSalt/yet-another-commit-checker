@@ -87,7 +87,6 @@ public class YaccGlobalHookTest {
     @Test
     public void testPreUpdate_globalHookAcceptsIfRepoHookEnabledAndConfigured() {
         globalSettingsMap.put("commitMessageRegex", "bar");
-        repositoryHook.setConfigured(true);
         repositoryHook.setEnabled(true);
 
         RepositoryHookResult result = yaccPreReceiveHook.preUpdate(preRepositoryHookContext,

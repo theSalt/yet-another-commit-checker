@@ -11,11 +11,9 @@ import javax.annotation.Nonnull;
  */
 public class StubRepositoryHook implements RepositoryHook {
     private boolean enabled;
-    private boolean configured;
 
     public StubRepositoryHook() {
         enabled = false;
-        configured = false;
     }
 
     @Nonnull
@@ -35,10 +33,6 @@ public class StubRepositoryHook implements RepositoryHook {
 
     @Override
     public boolean isConfigured() {
-        return configured;
-    }
-
-    public void setConfigured(boolean configured) {
-        this.configured = configured;
+        throw new UnsupportedOperationException();
     }
 }
