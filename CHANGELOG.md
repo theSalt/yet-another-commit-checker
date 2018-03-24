@@ -1,6 +1,6 @@
 # YACC Changelog
 
-### 1.19 (unreleased)
+### 1.19 (2018-03-24)
 
 * Bugfix: Fix service users not able to push annotated tags when committer
 name and email checks enabled. Thanks
