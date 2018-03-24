@@ -66,6 +66,8 @@ public class YaccServiceImpl implements YaccService {
             YaccErrorBuilder errorBuilder = new YaccErrorBuilder(settings);
             String message = errorBuilder.getErrorMessage(errors);
 
+            log.debug("push rejected by ref checks, errors={}", errors);
+
             return RepositoryHookResult.rejected("Push rejected by YACC", message);
         }
 

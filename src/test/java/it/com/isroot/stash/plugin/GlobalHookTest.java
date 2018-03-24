@@ -121,4 +121,32 @@ public class GlobalHookTest {
                 .contains("refs/heads/new-branch: Invalid branch name. 'new-branch' does not match regex 'dev'")
                 .doesNotContain("expected committer");
     }
+
+    /**
+     * Same idea as {@link #testGlobalHookUsedAfterRepoHookToggledOnOff()}, but spot checks ref
+     * checks. Branch name check is a ref check, not a commit check, so works a little differently.
+     */
+    @Test
+    public void testBranchNameCheck_globalHookUsedAfterRepoHookToggledOnOff() throws Exception {
+        Git git = gitRepoRule.getGitRepo().getGit();
+
+        gitRepoRule.configureYaccGlobalHook(ImmutableMap
+                .of("branchNameRegex", "global"));
+
+        // Toggle hook settings on/off
+        gitRepoRule.enableYaccRepoHook();
+        gitRepoRule.configureYaccRepoHook(ImmutableMap
+                .of("branchNameRegex", "repo"));
+        gitRepoRule.disableYaccRepoHook();
+
+        // Push a branch... this should be rejected by global settings
+        git.branchCreate()
+                .setName("repo")
+                .call();
+
+        PushResult pushResult = gitRepoRule.getGitRepo()
+                .push("repo");
+        assertThat(pushResult.getRemoteUpdates()).extracting(RemoteRefUpdate::getStatus)
+                .containsExactly(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+    }
 }
