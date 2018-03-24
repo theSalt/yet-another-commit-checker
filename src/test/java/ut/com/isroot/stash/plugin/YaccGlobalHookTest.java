@@ -32,10 +32,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-
 
 /**
  * Cloned from YaccHookTest.java and modified to test against the PreReceiveHook interface.
@@ -43,34 +43,23 @@ import static org.mockito.Mockito.when;
  * @author Jim Bethancourt
  */
 public class YaccGlobalHookTest {
-    @Mock
-    private YaccService yaccService;
-    @Mock
-    private RepositoryHookService repositoryHookService;
-    @Mock
-    private Repository repository;
-    @Mock
-    private SecurityService securityService;
-    @Mock
-    private EscalatedSecurityContext escalatedSecurityContext;
-    @Mock
-    private RepositoryPushHookRequest repositoryPushHookRequest;
-    @Mock
-    private PreRepositoryHookContext preRepositoryHookContext;
+    @Mock private YaccService yaccService;
+    @Mock private RepositoryHookService repositoryHookService;
+    @Mock private Repository repository;
+    @Mock private SecurityService securityService;
+    @Mock private EscalatedSecurityContext escalatedSecurityContext;
+    @Mock private RepositoryPushHookRequest repositoryPushHookRequest;
+    @Mock private PreRepositoryHookContext preRepositoryHookContext;
 
-    @Captor
-    private ArgumentCaptor<Settings> settingsCapture;
+    @Captor private ArgumentCaptor<Settings> settingsCapture;
 
     private PluginSettingsFactory pluginSettingsFactory;
-
     private Map<String, Object> globalSettingsMap = new HashMap<>();
-
     private StubRepositoryHook repositoryHook;
-
     private YaccGlobalHook yaccPreReceiveHook;
 
     @Before
-    public void setup() throws Throwable {
+    public void setup() {
         MockitoAnnotations.initMocks(this);
 
         pluginSettingsFactory = new MockPluginSettingsFactory();
@@ -91,12 +80,13 @@ public class YaccGlobalHookTest {
         pluginSettings.put(YaccConfigServlet.SETTINGS_MAP, globalSettingsMap);
 
         when(repositoryPushHookRequest.getRepository()).thenReturn(repository);
+
+        when(yaccService.check(any(), any(), any())).thenReturn(mock(RepositoryHookResult.class));
     }
 
     @Test
     public void testPreUpdate_globalHookAcceptsIfRepoHookEnabledAndConfigured() {
         globalSettingsMap.put("commitMessageRegex", "bar");
-        repositoryHook.setConfigured(true);
         repositoryHook.setEnabled(true);
 
         RepositoryHookResult result = yaccPreReceiveHook.preUpdate(preRepositoryHookContext,

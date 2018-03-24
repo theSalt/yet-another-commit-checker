@@ -5,6 +5,12 @@
 * Bugfix: Fix service users not able to push annotated tags when committer
 name and email checks enabled. Thanks
 [@c-klinger](https://github.com/c-klinger)!
+* Bugfix: Fix bug that prevented global settings from taking affect after
+toggling repo hook on/off.
+ 
+    Note: If you are using global settings and want to opt-out a specific
+    repository, enable YACC repository hook and disable all settings for
+    that particular repository.
 
 ### 1.18 (2017-10-03)
 

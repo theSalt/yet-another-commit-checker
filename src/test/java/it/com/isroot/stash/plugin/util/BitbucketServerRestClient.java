@@ -8,10 +8,7 @@ import org.apache.http.auth.AuthenticationException;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.*;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.auth.BasicScheme;
@@ -87,6 +84,19 @@ public class BitbucketServerRestClient {
         }
     }
 
+    public void disableHook(String repoSlug, String hookKey) {
+        HttpDelete disableHook = new HttpDelete(
+                buildUri("/rest/api/1.0/projects/PROJECT_1/repos/%s/settings/hooks/%s/enabled",
+                        repoSlug, hookKey));
+
+        HttpResponse response = execute(disableHook);
+        try {
+            log.info("response: {}", EntityUtils.toString(response.getEntity()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void getHookSettings(String repoSlug, String hookKey) {
         HttpGet hookSettings = new HttpGet(buildUri("/rest/api/1.0/projects/PROJECT_1/repos/%s/settings/hooks/%s/settings",
                 repoSlug, hookKey));
@@ -109,6 +119,8 @@ public class BitbucketServerRestClient {
     }
 
     public void doFormPost(String path, Map<String, String> settings) {
+        log.info("form post, path={} settings={}", path, settings);
+
         HttpPost post = new HttpPost(buildUri(path));
 
         List<NameValuePair> params = new ArrayList<>();

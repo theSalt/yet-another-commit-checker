@@ -3,6 +3,7 @@ package it.com.isroot.stash.plugin.util;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -31,6 +32,9 @@ public class YaccRule extends ExternalResource {
         restClient = new BitbucketServerRestClient();
         String slug = restClient.createRepo(repoSlug);
 
+        // Clear global hook settings if present
+        configureYaccGlobalHook(new HashMap<>());
+
         gitRepo = new GitRepo(temporaryFolder.newFolder().toPath(), slug);
     }
 
@@ -45,6 +49,10 @@ public class YaccRule extends ExternalResource {
 
     public void enableYaccRepoHook() {
         restClient.enableHook(repoSlug, YACC_HOOK_KEY);
+    }
+
+    public void disableYaccRepoHook() {
+        restClient.disableHook(repoSlug, YACC_HOOK_KEY);
     }
 
     public void configureYaccRepoHook(Map<String, String> settings) {

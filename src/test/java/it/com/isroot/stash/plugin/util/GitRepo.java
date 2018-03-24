@@ -49,7 +49,7 @@ public class GitRepo {
 
     public PushResult push(String ref) {
         try {
-            log.info("pushing repo dir: {}", git.getRepository().getDirectory());
+            log.info("pushing repo dir: ref={} in {}", ref, git.getRepository().getDirectory());
 
             PushResult result = git.push()
                     .add(ref)

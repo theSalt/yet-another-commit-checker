@@ -62,6 +62,27 @@ public class BranchNameRegexTest {
     }
 
     @Test
+    public void testGlobalSetting_globalHookUsedAfterRepoHookToggledOnOff() {
+        YaccGlobalSettingsPage globalSettings = STASH.visit(BitbucketLoginPage.class)
+                .loginAsSysAdmin(YaccGlobalSettingsPage.class);
+
+        globalSettings.setBranchNameRegex("global-branch-regex");
+        globalSettings.clickSubmit();
+
+        YaccRepoSettingsPage repoSettingsPage = STASH.visit(YaccRepoSettingsPage.class);
+        repoSettingsPage.clickEditYacc()
+                .clickSubmit();
+        repoSettingsPage.clickDisable();
+
+        YaccBranchCreationPage branchCreate = STASH.visit(YaccBranchCreationPage.class);
+        branchCreate.setBranchName("invalid-branch-name");
+
+        branchCreate.createBranchWithError();
+        assertThat(branchCreate.getError()).isEqualTo("Invalid branch name. " +
+                "invalid-branch-name does not match regex global-branch-regex");
+    }
+
+    @Test
     public void testRepoSetting() {
         YaccRepoSettingsPage repoSettingsPage = STASH.visit(BitbucketLoginPage.class)
                 .loginAsSysAdmin(YaccRepoSettingsPage.class);
