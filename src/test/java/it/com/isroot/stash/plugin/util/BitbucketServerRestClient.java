@@ -120,6 +120,8 @@ public class BitbucketServerRestClient {
 
         update.setEntity(buildJsonEntity(settings));
         HttpResponse response = execute(update);
+
+        // Entity isn't used, but need to consume it to close up connection
         try {
             EntityUtils.consume(response.getEntity());
         } catch (IOException e) {

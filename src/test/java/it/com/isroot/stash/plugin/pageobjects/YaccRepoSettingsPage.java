@@ -39,6 +39,10 @@ public class YaccRepoSettingsPage extends YaccSettingsCommon {
     }
 
     public YaccRepoSettingsPage clickEnableYacc() {
+        // First time hook is enabled, settings modal pops up. Disable it before enabling to
+        // force settings modal to pop up. This overloads method to both enable and bring up
+        // settings in one go.
+        // Probably not great but it works :-)
         clickDisable();
 
         log.info("enabling yacc");
