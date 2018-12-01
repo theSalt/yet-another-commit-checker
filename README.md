@@ -13,7 +13,7 @@ configured policies, the push to the repository will be rejected.
 
 Features:
 
-* Configure globally or per-repository
+* Per-repository, per-project, or globally
 * Require commit committer name and email to match Bitbucket Server user
 * Require commit messages to match regex
 * Require commit message to contain valid JIRA issue ids

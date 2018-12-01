@@ -1,5 +1,9 @@
 # YACC Changelog
 
+## 1.20 (NEXT)
+
+* Feature: Support for project-level configuration (GH-165)
+
 ### 1.19 (2018-03-24)
 
 * Bugfix: Fix service users not able to push annotated tags when committer
