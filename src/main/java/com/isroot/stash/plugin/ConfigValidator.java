@@ -1,26 +1,24 @@
 package com.isroot.stash.plugin;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
+import com.atlassian.bitbucket.scope.Scope;
+import com.atlassian.bitbucket.setting.Settings;
+import com.atlassian.bitbucket.setting.SettingsValidationErrors;
+import com.atlassian.bitbucket.setting.SettingsValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import javax.annotation.Nonnull;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.atlassian.bitbucket.repository.Repository;
-import com.atlassian.bitbucket.setting.RepositorySettingsValidator;
-import com.atlassian.bitbucket.setting.Settings;
-import com.atlassian.bitbucket.setting.SettingsValidationErrors;
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 /**
  * @author sdford
  * @since 2013-05-11
  */
-public class ConfigValidator implements RepositorySettingsValidator {
+public class ConfigValidator implements SettingsValidator {
     private static final Logger log = LoggerFactory.getLogger(ConfigValidator.class);
 
     private final JiraService jiraService;
@@ -31,7 +29,9 @@ public class ConfigValidator implements RepositorySettingsValidator {
 
     @Override
     public void validate(@Nonnull Settings settings, @Nonnull SettingsValidationErrors errors,
-                         @Nonnull Repository repository) {
+                         @Nonnull Scope scope) {
+        log.debug("validating config");
+
         validationRegex(settings, errors, "commitMessageRegex");
         validationRegex(settings, errors, "committerEmailRegex");
         validationRegex(settings, errors, "excludeByRegex");

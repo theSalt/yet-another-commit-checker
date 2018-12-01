@@ -8,7 +8,11 @@ import org.apache.http.auth.AuthenticationException;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.*;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.auth.BasicScheme;
@@ -18,6 +22,7 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.json.Json;
 import javax.json.JsonObject;
 import java.io.IOException;
@@ -69,10 +74,10 @@ public class BitbucketServerRestClient {
                 .getString("slug");
     }
 
-    public void enableHook(String repoSlug, String hookKey) {
-        HttpPut enableHook = new HttpPut(
-                buildUri("/rest/api/1.0/projects/PROJECT_1/repos/%s/settings/hooks/%s/enabled",
-                        repoSlug, hookKey));
+    public void enableHook(String hookKey, @Nullable String repoSlug) {
+        log.info("enabling hook, hookKey={} repoSlug={}", hookKey, repoSlug);
+
+        HttpPut enableHook = new HttpPut(hookUri(hookKey, repoSlug) + "/enabled");
 
         enableHook.setEntity(buildJsonEntity(new HashMap<>()));
 
@@ -84,10 +89,8 @@ public class BitbucketServerRestClient {
         }
     }
 
-    public void disableHook(String repoSlug, String hookKey) {
-        HttpDelete disableHook = new HttpDelete(
-                buildUri("/rest/api/1.0/projects/PROJECT_1/repos/%s/settings/hooks/%s/enabled",
-                        repoSlug, hookKey));
+    public void disableHook(String hookKey, @Nullable String repoSlug) {
+        HttpDelete disableHook = new HttpDelete(hookUri(hookKey, repoSlug) + "/enabled");
 
         HttpResponse response = execute(disableHook);
         try {
@@ -98,8 +101,7 @@ public class BitbucketServerRestClient {
     }
 
     public void getHookSettings(String repoSlug, String hookKey) {
-        HttpGet hookSettings = new HttpGet(buildUri("/rest/api/1.0/projects/PROJECT_1/repos/%s/settings/hooks/%s/settings",
-                repoSlug, hookKey));
+        HttpGet hookSettings = new HttpGet(hookUri(hookKey, repoSlug) + "/settings");
 
         HttpResponse response = execute(hookSettings);
         try {
@@ -109,13 +111,21 @@ public class BitbucketServerRestClient {
         }
     }
 
-    public void setHookSettings(String repoSlug, String hookKey, Map<String, String> settings) {
-        HttpPut update = new HttpPut(
-                buildUri("/rest/api/1.0/projects/PROJECT_1/repos/%s/settings/hooks/%s/settings",
-                repoSlug, hookKey));
+    public void setHookSettings(String hookKey, @Nullable String repoSlug,
+                                Map<String, String> settings) {
+        log.info("setting hook settings, hookKey={} repoSlug={} settings={}", hookKey, repoSlug,
+                settings);
+
+        HttpPut update = new HttpPut(hookUri(hookKey, repoSlug) + "/settings");
 
         update.setEntity(buildJsonEntity(settings));
-        execute(update);
+        HttpResponse response = execute(update);
+        try {
+            EntityUtils.consume(response.getEntity());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     public void doFormPost(String path, Map<String, String> settings) {
@@ -167,5 +177,19 @@ public class BitbucketServerRestClient {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private String hookUri(String hookKey, @Nullable String repoSlug) {
+        String uri;
+
+        if(repoSlug != null) {
+            uri = String.format("/rest/api/1.0/projects/PROJECT_1/repos/%s/settings/hooks/%s",
+                    repoSlug, hookKey);
+        } else {
+            uri = String.format("/rest/api/1.0/projects/PROJECT_1/settings/hooks/%s",
+                    hookKey);
+        }
+
+        return buildUri(uri);
     }
 }

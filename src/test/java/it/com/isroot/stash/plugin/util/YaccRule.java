@@ -2,6 +2,8 @@ package it.com.isroot.stash.plugin.util;
 
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,6 +14,8 @@ import java.util.UUID;
  * @since 2017-09-02
  */
 public class YaccRule extends ExternalResource {
+    private static final Logger log = LoggerFactory.getLogger(YaccRule.class);
+
     private static final String YACC_HOOK_KEY = "com.isroot.stash.plugin.yacc:yaccHook";
 
     private TemporaryFolder temporaryFolder;
@@ -35,7 +39,13 @@ public class YaccRule extends ExternalResource {
         // Clear global hook settings if present
         configureYaccGlobalHook(new HashMap<>());
 
+        // Disable and clear project settings if present
+        restClient.setHookSettings(YACC_HOOK_KEY, null, new HashMap<>());
+        restClient.disableHook(YACC_HOOK_KEY, null);
+
         gitRepo = new GitRepo(temporaryFolder.newFolder().toPath(), slug);
+
+        log.info("YaccRule before() finish");
     }
 
     @Override
@@ -47,16 +57,26 @@ public class YaccRule extends ExternalResource {
         return gitRepo;
     }
 
+    public void enableYaccProjectHook() {
+        restClient.enableHook(YACC_HOOK_KEY, null);
+    }
+
     public void enableYaccRepoHook() {
-        restClient.enableHook(repoSlug, YACC_HOOK_KEY);
+        log.info("enable yacc repo hook");
+
+        restClient.enableHook(YACC_HOOK_KEY, repoSlug);
     }
 
     public void disableYaccRepoHook() {
-        restClient.disableHook(repoSlug, YACC_HOOK_KEY);
+        restClient.disableHook(YACC_HOOK_KEY, repoSlug);
     }
 
     public void configureYaccRepoHook(Map<String, String> settings) {
-        restClient.setHookSettings(repoSlug, YACC_HOOK_KEY, settings);
+        restClient.setHookSettings(YACC_HOOK_KEY, repoSlug, settings);
+    }
+
+    public void configureYaccProjectHook(Map<String, String> settings) {
+        restClient.setHookSettings(YACC_HOOK_KEY, null, settings);
     }
 
     public void configureYaccGlobalHook(Map<String, String> settings) {

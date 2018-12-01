@@ -74,6 +74,24 @@ public class GlobalHookTest {
     }
 
     @Test
+    public void testProjectHookUsedInsteadIfEnabled() {
+        gitRepoRule.configureYaccGlobalHook(ImmutableMap
+                .of("commitMessageRegex", "global"));
+
+        gitRepoRule.enableYaccProjectHook();
+        gitRepoRule.configureYaccProjectHook(ImmutableMap
+                .of("commitMessageRegex", "project"));
+
+        // Push a commit that would have been allowed by global settings. It
+        // should be rejected due to repo hook.
+        PushResult pushResult = gitRepoRule.getGitRepo()
+                .commitFile("file.java", "global")
+                .push();
+        assertThat(pushResult.getRemoteUpdates()).extracting(RemoteRefUpdate::getStatus)
+                .containsExactly(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+    }
+
+    @Test
     public void testGlobalHookUsedAfterRepoHookToggledOnOff() {
         // Make sure global hook configured
         gitRepoRule.configureYaccGlobalHook(ImmutableMap

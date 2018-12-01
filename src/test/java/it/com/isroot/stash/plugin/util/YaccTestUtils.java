@@ -24,7 +24,7 @@ public class YaccTestUtils {
         YaccRepoSettingsPage settingsPage = stash.visit(BitbucketLoginPage.class)
                 .loginAsSysAdmin(YaccRepoSettingsPage.class);
 
-        settingsPage.clickEditYacc()
+        settingsPage.clickEnableYacc()
                 .clearSettings();
         settingsPage.clickSubmit();
         settingsPage.clickDisable();
@@ -40,7 +40,7 @@ public class YaccTestUtils {
         AsyncTestUtils.waitFor(new WaitCondition() {
             @Override
             public boolean test() throws Exception {
-                tester.gotoUrl(System.getProperty("http.bitbucket.url") + "/status");
+                tester.gotoUrl("http://localhost:7990/bitbucket/status");
                 return tester.getDriver().getPageSource().contains("RUNNING");
             }
 
