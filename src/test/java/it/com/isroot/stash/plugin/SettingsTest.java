@@ -68,7 +68,7 @@ public class SettingsTest {
     public void testRepositorySettings() {
         YaccRepoSettingsPage repoSettingsPage = STASH.visit(BitbucketLoginPage.class)
                 .loginAsSysAdmin(YaccRepoSettingsPage.class)
-                .clickEditYacc();
+                .clickEnableYacc();
 
         verifyDefaults(repoSettingsPage);
 
@@ -80,7 +80,7 @@ public class SettingsTest {
         repoSettingsPage.clickSubmit();
 
         repoSettingsPage = STASH.visit(YaccRepoSettingsPage.class)
-                .clickEditYacc();
+                .clickEnableYacc();
 
         verifyValues(repoSettingsPage);
     }

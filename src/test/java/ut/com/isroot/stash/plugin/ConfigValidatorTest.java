@@ -1,6 +1,6 @@
 package ut.com.isroot.stash.plugin;
 
-import com.atlassian.bitbucket.repository.Repository;
+import com.atlassian.bitbucket.scope.Scope;
 import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.setting.SettingsValidationErrors;
 import com.isroot.stash.plugin.ConfigValidator;
@@ -26,7 +26,7 @@ public class ConfigValidatorTest {
     @Mock private JiraService jiraService;
     @Mock private Settings settings;
     @Mock private SettingsValidationErrors settingsValidationErrors;
-    @Mock private Repository repository;
+    @Mock private Scope scope;
 
     private ConfigValidator configValidator;
 
@@ -43,7 +43,7 @@ public class ConfigValidatorTest {
         when(settings.getBoolean("requireJiraIssue", false)).thenReturn(true);
         when(jiraService.doesJiraApplicationLinkExist()).thenReturn(false);
 
-        configValidator.validate(settings, settingsValidationErrors, repository);
+        configValidator.validate(settings, settingsValidationErrors, scope);
 
         verify(settingsValidationErrors).addFieldError("requireJiraIssue", "Can't be enabled because a JIRA application link does not exist.");
     }
@@ -56,7 +56,7 @@ public class ConfigValidatorTest {
         errors.add("some error");
         when(jiraService.checkJqlQuery(anyString())).thenReturn(errors);
 
-        configValidator.validate(settings, settingsValidationErrors, repository);
+        configValidator.validate(settings, settingsValidationErrors, scope);
 
         verify(settings).getString("issueJqlMatcher");
         verify(jiraService).checkJqlQuery("this jql query is invalid");
@@ -68,7 +68,7 @@ public class ConfigValidatorTest {
         when(settings.getString("issueJqlMatcher")).thenReturn("assignee is not empty");
         when(jiraService.checkJqlQuery(anyString())).thenReturn(new ArrayList<>());
 
-        configValidator.validate(settings, settingsValidationErrors, repository);
+        configValidator.validate(settings, settingsValidationErrors, scope);
 
         verify(settings).getString("issueJqlMatcher");
         verify(jiraService).checkJqlQuery("assignee is not empty");
@@ -79,7 +79,7 @@ public class ConfigValidatorTest {
     public void testValidate_excludeByRegex_emptyStringAllowed() {
         when(settings.getString("excludeByRegex")).thenReturn("");
 
-        configValidator.validate(settings, settingsValidationErrors, repository);
+        configValidator.validate(settings, settingsValidationErrors, scope);
 
         verify(settings).getString("excludeByRegex");
         verifyZeroInteractions(settingsValidationErrors);
@@ -89,7 +89,7 @@ public class ConfigValidatorTest {
     public void testValidate_excludeByRegex_goodRegex() {
         when(settings.getString("excludeByRegex")).thenReturn("^Revert \"|#skipchecks");
 
-        configValidator.validate(settings, settingsValidationErrors, repository);
+        configValidator.validate(settings, settingsValidationErrors, scope);
 
         verify(settings).getString("excludeByRegex");
         verifyZeroInteractions(settingsValidationErrors);
@@ -98,7 +98,7 @@ public class ConfigValidatorTest {
     public void testValidate_excludeByRegex_badRegex() {
         when(settings.getString("excludeByRegex")).thenReturn("^(");
 
-        configValidator.validate(settings, settingsValidationErrors, repository);
+        configValidator.validate(settings, settingsValidationErrors, scope);
 
         verify(settings).getString("excludeByRegex");
         verify(settingsValidationErrors).addFieldError("excludeByRegex", "Invalid Regex: Unclosed group near index 2\n" +
@@ -110,7 +110,7 @@ public class ConfigValidatorTest {
     public void testValidate_excludeBranchRegex_emptyStringAllowed() {
         when(settings.getString("excludeBranchRegex")).thenReturn("");
 
-        configValidator.validate(settings, settingsValidationErrors, repository);
+        configValidator.validate(settings, settingsValidationErrors, scope);
 
         verify(settings).getString("excludeBranchRegex");
         verifyZeroInteractions(settingsValidationErrors);
@@ -120,7 +120,7 @@ public class ConfigValidatorTest {
     public void testValidate_excludeBranchRegex_goodRegex() {
         when(settings.getString("excludeBranchRegex")).thenReturn("valid regex");
 
-        configValidator.validate(settings, settingsValidationErrors, repository);
+        configValidator.validate(settings, settingsValidationErrors, scope);
 
         verify(settings).getString("excludeBranchRegex");
         verifyZeroInteractions(settingsValidationErrors);
@@ -129,7 +129,7 @@ public class ConfigValidatorTest {
     public void testValidate_excludeBranchRegex_badRegex() {
         when(settings.getString("excludeBranchRegex")).thenReturn("^(");
 
-        configValidator.validate(settings, settingsValidationErrors, repository);
+        configValidator.validate(settings, settingsValidationErrors, scope);
 
         verify(settings).getString("excludeBranchRegex");
         verify(settingsValidationErrors).addFieldError("excludeBranchRegex", "Invalid Regex: Unclosed group near index 2\n" +
@@ -141,7 +141,7 @@ public class ConfigValidatorTest {
     public void testValidate_commitMessageRegex_emptyStringAllowed() {
         when(settings.getString("commitMessageRegex")).thenReturn("");
 
-        configValidator.validate(settings, settingsValidationErrors, repository);
+        configValidator.validate(settings, settingsValidationErrors, scope);
 
         verify(settings).getString("commitMessageRegex");
         verifyZeroInteractions(settingsValidationErrors);
@@ -151,7 +151,7 @@ public class ConfigValidatorTest {
     public void testValidate_commitMessageRegex_goodRegex() {
         when(settings.getString("commitMessageRegex")).thenReturn(".{32,}");
 
-        configValidator.validate(settings, settingsValidationErrors, repository);
+        configValidator.validate(settings, settingsValidationErrors, scope);
 
         verify(settings).getString("commitMessageRegex");
         verifyZeroInteractions(settingsValidationErrors);
@@ -161,7 +161,7 @@ public class ConfigValidatorTest {
     public void testValidate_commitMessageRegex_badRegex() {
         when(settings.getString("commitMessageRegex")).thenReturn(")");
 
-        configValidator.validate(settings, settingsValidationErrors, repository);
+        configValidator.validate(settings, settingsValidationErrors, scope);
 
         verify(settings).getString("commitMessageRegex");
         verify(settingsValidationErrors).addFieldError("commitMessageRegex", "Invalid Regex: Unmatched closing ')'\n" +
@@ -172,7 +172,7 @@ public class ConfigValidatorTest {
     public void testValidate_branchNameRegex_goodRegex() {
         when(settings.getString("branchNameRegex")).thenReturn("feature/[A-Z]+-\\d+-[A-Z-]*");
 
-        configValidator.validate(settings, settingsValidationErrors, repository);
+        configValidator.validate(settings, settingsValidationErrors, scope);
 
         verify(settings).getString("branchNameRegex");
         verifyZeroInteractions(settingsValidationErrors);
@@ -182,7 +182,7 @@ public class ConfigValidatorTest {
     public void testValidate_branchNameRegex_badRegex() {
         when(settings.getString("branchNameRegex")).thenReturn(")");
 
-        configValidator.validate(settings, settingsValidationErrors, repository);
+        configValidator.validate(settings, settingsValidationErrors, scope);
 
         verify(settings).getString("branchNameRegex");
         verify(settingsValidationErrors).addFieldError("branchNameRegex", "Invalid Regex: Unmatched closing ')'\n" +
@@ -193,7 +193,7 @@ public class ConfigValidatorTest {
     public void testValidate_committerEmailRegex_isValidated() {
         when(settings.getString("committerEmailRegex")).thenReturn(")");
 
-        configValidator.validate(settings, settingsValidationErrors, repository);
+        configValidator.validate(settings, settingsValidationErrors, scope);
 
         verify(settingsValidationErrors)
                 .addFieldError("committerEmailRegex", "Invalid Regex: Unmatched closing ')'\n)");

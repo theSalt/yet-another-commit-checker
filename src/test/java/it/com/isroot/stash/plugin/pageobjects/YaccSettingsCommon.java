@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @since 2015-09-13
  */
 public abstract class YaccSettingsCommon extends BitbucketPage {
-    @ElementBy(className = "prevent-double-submit")
+    @ElementBy(cssSelector = "form.prevent-double-submit,.aui-dialog2-content form")
     private PageElement form;
 
     @ElementBy(id = "requireMatchingAuthorEmail")

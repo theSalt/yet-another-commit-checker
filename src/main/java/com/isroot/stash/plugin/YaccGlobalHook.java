@@ -55,7 +55,7 @@ public class YaccGlobalHook implements PreRepositoryHook<RepositoryPushHookReque
             }
         });
 
-        log.debug("yacc repo hook, enabled={}", hook.isEnabled());
+        log.debug("yacc repo hook, enabled={} scope={}", hook.isEnabled(), hook.getScope());
 
         if(!hook.isEnabled()) {
             log.debug("yacc repository hook disabled");

@@ -70,7 +70,7 @@ public class BranchNameRegexTest {
         globalSettings.clickSubmit();
 
         YaccRepoSettingsPage repoSettingsPage = STASH.visit(YaccRepoSettingsPage.class);
-        repoSettingsPage.clickEditYacc()
+        repoSettingsPage.clickEnableYacc()
                 .clickSubmit();
         repoSettingsPage.clickDisable();
 
@@ -87,7 +87,7 @@ public class BranchNameRegexTest {
         YaccRepoSettingsPage repoSettingsPage = STASH.visit(BitbucketLoginPage.class)
                 .loginAsSysAdmin(YaccRepoSettingsPage.class);
 
-        repoSettingsPage.clickEditYacc();
+        repoSettingsPage.clickEnableYacc();
 
         repoSettingsPage.setBranchNameRegex("repo-[A-Z]+-[0-9]+.*");
         repoSettingsPage.clickSubmit();

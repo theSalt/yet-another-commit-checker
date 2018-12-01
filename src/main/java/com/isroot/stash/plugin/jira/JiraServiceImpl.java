@@ -212,6 +212,8 @@ public class JiraServiceImpl implements JiraService {
                     }
 
                     if (statusException.getResponse().getStatusCode() == 400) {
+                        log.debug("400 check, {}", trackInvalidJqlAsError);
+
                         if(trackInvalidJqlAsError) {
                             ex.addError(link, "Query is not valid for JIRA instance: " + jqlQuery);
                         }

@@ -2,6 +2,8 @@ package ut.com.isroot.stash.plugin.mock;
 
 import com.atlassian.bitbucket.hook.repository.RepositoryHook;
 import com.atlassian.bitbucket.hook.repository.RepositoryHookDetails;
+import com.atlassian.bitbucket.scope.Scope;
+import org.mockito.Mockito;
 
 import javax.annotation.Nonnull;
 
@@ -39,5 +41,11 @@ public class StubRepositoryHook implements RepositoryHook {
     @Override
     public boolean isConfigured() {
         throw new UnsupportedOperationException();
+    }
+
+    @Nonnull
+    @Override
+    public Scope getScope() {
+        return Mockito.mock(Scope.class);
     }
 }
