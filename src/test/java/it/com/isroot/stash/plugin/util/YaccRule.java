@@ -5,6 +5,7 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.json.JsonObject;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -81,6 +82,10 @@ public class YaccRule extends ExternalResource {
 
     public void configureYaccGlobalHook(Map<String, String> settings) {
         restClient.doFormPost("/plugins/servlet/yaccHook/config", settings);
+    }
+
+    public JsonObject createBranch(String branchName) {
+        return restClient.createBranch(repoSlug, branchName);
     }
 }
 

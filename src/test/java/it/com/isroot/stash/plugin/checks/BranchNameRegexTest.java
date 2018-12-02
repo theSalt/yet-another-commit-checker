@@ -54,8 +54,10 @@ public class BranchNameRegexTest {
         branchCreate.setBranchName("invalid-branch-name");
 
         branchCreate.createBranchWithError();
-        assertThat(branchCreate.getError()).isEqualTo("Invalid branch name. " +
-                "invalid-branch-name does not match regex [A-Z]+-[0-9]+.*");
+        assertThat(branchCreate.getError())
+                .isEqualTo("Branch name does not comply with repository requirements. " +
+                "Invalid branch name. " +
+                "'invalid-branch-name' does not match regex '[A-Z]+-[0-9]+.*'");
 
         branchCreate.setBranchName("ABC-123-good-name-" + System.currentTimeMillis());
         branchCreate.createBranch("PROJECT_1", "rep_1");
@@ -78,8 +80,10 @@ public class BranchNameRegexTest {
         branchCreate.setBranchName("invalid-branch-name");
 
         branchCreate.createBranchWithError();
-        assertThat(branchCreate.getError()).isEqualTo("Invalid branch name. " +
-                "invalid-branch-name does not match regex global-branch-regex");
+        assertThat(branchCreate.getError())
+                .isEqualTo("Branch name does not comply with repository requirements. " +
+                        "Invalid branch name. " +
+                        "'invalid-branch-name' does not match regex 'global-branch-regex'");
     }
 
     @Test
@@ -96,8 +100,10 @@ public class BranchNameRegexTest {
         branchCreate.setBranchName("invalid-branch-name");
 
         branchCreate.createBranchWithError();
-        assertThat(branchCreate.getError()).isEqualTo("Invalid branch name. " +
-                "invalid-branch-name does not match regex repo-[A-Z]+-[0-9]+.*");
+        assertThat(branchCreate.getError())
+                .isEqualTo("Branch name does not comply with repository requirements. " +
+                        "Invalid branch name. " +
+                        "'invalid-branch-name' does not match regex 'repo-[A-Z]+-[0-9]+.*'");
 
         branchCreate.setBranchName("repo-ABC-123-good-name-" + System.currentTimeMillis());
         branchCreate.createBranch("PROJECT_1", "rep_1");
