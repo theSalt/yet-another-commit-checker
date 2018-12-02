@@ -3,6 +3,7 @@
 ## 1.20 (NEXT)
 
 * Feature: Support for project-level configuration (GH-165)
+* Maintenance: Replace deprecated BBS listener used for branch creation name checks with hook.
 
 ### 1.19 (2018-03-24)
 
