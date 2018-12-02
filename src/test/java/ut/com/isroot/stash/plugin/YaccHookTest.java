@@ -2,6 +2,7 @@ package ut.com.isroot.stash.plugin;
 
 import com.atlassian.bitbucket.hook.repository.PreRepositoryHookContext;
 import com.atlassian.bitbucket.hook.repository.RepositoryPushHookRequest;
+import com.atlassian.bitbucket.hook.repository.StandardRepositoryHookTrigger;
 import com.atlassian.bitbucket.setting.Settings;
 import com.isroot.stash.plugin.YaccHook;
 import com.isroot.stash.plugin.YaccService;
@@ -35,6 +36,9 @@ public class YaccHookTest {
 
         settings = new MapBackedSettings();
         when(repositoryHookContext.getSettings()).thenReturn(settings);
+
+        when(repositoryPushHookRequest.getTrigger())
+                .thenReturn(StandardRepositoryHookTrigger.REPO_PUSH);
     }
 
     @Test

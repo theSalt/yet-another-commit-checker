@@ -4,6 +4,7 @@ import com.atlassian.bitbucket.hook.repository.PreRepositoryHookContext;
 import com.atlassian.bitbucket.hook.repository.RepositoryHookResult;
 import com.atlassian.bitbucket.hook.repository.RepositoryHookService;
 import com.atlassian.bitbucket.hook.repository.RepositoryPushHookRequest;
+import com.atlassian.bitbucket.hook.repository.StandardRepositoryHookTrigger;
 import com.atlassian.bitbucket.permission.Permission;
 import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.setting.Settings;
@@ -80,6 +81,8 @@ public class YaccGlobalHookTest {
         pluginSettings.put(YaccConfigServlet.SETTINGS_MAP, globalSettingsMap);
 
         when(repositoryPushHookRequest.getRepository()).thenReturn(repository);
+        when(repositoryPushHookRequest.getTrigger())
+                .thenReturn(StandardRepositoryHookTrigger.REPO_PUSH);
 
         when(yaccService.check(any(), any(), any())).thenReturn(mock(RepositoryHookResult.class));
     }

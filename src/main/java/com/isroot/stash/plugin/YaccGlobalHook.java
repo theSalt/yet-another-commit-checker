@@ -1,11 +1,15 @@
 package com.isroot.stash.plugin;
 
+import com.atlassian.bitbucket.event.branch.BranchCreationHookRequest;
 import com.atlassian.bitbucket.hook.repository.PreRepositoryHook;
 import com.atlassian.bitbucket.hook.repository.PreRepositoryHookContext;
 import com.atlassian.bitbucket.hook.repository.RepositoryHook;
+import com.atlassian.bitbucket.hook.repository.RepositoryHookRequest;
 import com.atlassian.bitbucket.hook.repository.RepositoryHookResult;
 import com.atlassian.bitbucket.hook.repository.RepositoryHookService;
+import com.atlassian.bitbucket.hook.repository.RepositoryHookTrigger;
 import com.atlassian.bitbucket.hook.repository.RepositoryPushHookRequest;
+import com.atlassian.bitbucket.hook.repository.StandardRepositoryHookTrigger;
 import com.atlassian.bitbucket.permission.Permission;
 import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.setting.Settings;
@@ -24,7 +28,7 @@ import java.util.Map;
  * @author Uldis Ansmits
  * @author Jim Bethancourt
  */
-public class YaccGlobalHook implements PreRepositoryHook<RepositoryPushHookRequest> {
+public class YaccGlobalHook implements PreRepositoryHook {
 
     private static final Logger log = LoggerFactory.getLogger(YaccGlobalHook.class);
 
@@ -46,8 +50,10 @@ public class YaccGlobalHook implements PreRepositoryHook<RepositoryPushHookReque
     @Nonnull
     @Override
     public RepositoryHookResult preUpdate(@Nonnull PreRepositoryHookContext context,
-            @Nonnull RepositoryPushHookRequest repositoryPushHookRequest) {
-        final Repository repository = repositoryPushHookRequest.getRepository();
+            @Nonnull RepositoryHookRequest repositoryHookRequest) {
+        log.debug("global hook, trigger={}", repositoryHookRequest.getTrigger());
+
+        final Repository repository = repositoryHookRequest.getRepository();
 
         RepositoryHook hook = securityService.withPermission(Permission.REPO_ADMIN, "Get plugin configuration").call(new UncheckedOperation<RepositoryHook>() {
             public RepositoryHook perform() {
@@ -65,7 +71,7 @@ public class YaccGlobalHook implements PreRepositoryHook<RepositoryPushHookReque
             log.debug("global settings: {}", storedConfig.asMap());
 
             if(areThereEnabledSettings(storedConfig.asMap())) {
-                return yaccService.check(context, repositoryPushHookRequest, storedConfig);
+                return handleGlobalHook(context, repositoryHookRequest, storedConfig);
             } else {
                 log.debug("no need to run yacc because no global settings configured");
             }
@@ -74,6 +80,21 @@ public class YaccGlobalHook implements PreRepositoryHook<RepositoryPushHookReque
         }
 
         // Will be accepted unless commit callback rejects a commit
+        return RepositoryHookResult.accepted();
+    }
+
+    private RepositoryHookResult handleGlobalHook(PreRepositoryHookContext context,
+                                                  RepositoryHookRequest request, Settings config) {
+        final RepositoryHookTrigger trigger = request.getTrigger();
+
+        if (trigger == StandardRepositoryHookTrigger.REPO_PUSH) {
+            return yaccService.check(context, (RepositoryPushHookRequest)request, config);
+        } else if (trigger == StandardRepositoryHookTrigger.BRANCH_CREATE) {
+            return YaccHook.handleBranchCreation(config, (BranchCreationHookRequest)request);
+        }
+
+        log.debug("trigger does not needed handling, accepting request");
+
         return RepositoryHookResult.accepted();
     }
 

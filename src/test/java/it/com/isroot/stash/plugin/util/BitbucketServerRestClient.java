@@ -121,13 +121,8 @@ public class BitbucketServerRestClient {
         update.setEntity(buildJsonEntity(settings));
         HttpResponse response = execute(update);
 
-        // Entity isn't used, but need to consume it to close up connection
-        try {
-            EntityUtils.consume(response.getEntity());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
+        // Entity isn't used, but need to consume it to
+        responseToJson(response);
     }
 
     public void doFormPost(String path, Map<String, String> settings) {
@@ -149,6 +144,20 @@ public class BitbucketServerRestClient {
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public JsonObject createBranch(String repoSlug, String branchName) {
+        HttpPost post = new HttpPost(buildUri("/rest/api/1.0/projects/%s/repos/%s/branches",
+                PROJECT, repoSlug));
+
+        Map<String, String> params = new HashMap<>();
+        params.put("name", branchName);
+        params.put("startPoint", "master");
+        post.setEntity(buildJsonEntity(params));
+
+        HttpResponse response = execute(post);
+
+        return responseToJson(response);
     }
 
     private HttpResponse execute(HttpUriRequest request) {
