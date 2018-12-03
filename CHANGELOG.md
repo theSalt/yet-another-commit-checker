@@ -1,9 +1,11 @@
 # YACC Changelog
 
-## 1.20 (2018-12-02)
+### 1.21 (2018-12-02)
 
 * Feature: Support for project-level configuration (GH-165)
 * Maintenance: Replace deprecated BBS listener used for branch creation name checks with hook.
+
+### 1.20 (UNRELEASED)
 
 ### 1.19 (2018-03-24)
 
