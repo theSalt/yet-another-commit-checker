@@ -5,8 +5,6 @@
         <vendor name="${project.organization.name}" url="${project.organization.url}" />
         <param name="plugin-icon">images/pluginIcon.png</param>
         <param name="plugin-logo">images/pluginLogo.png</param>
-        <param name="atlassian-data-center-status">compatible</param>
-        <param name="atlassian-data-center-compatible">true</param>
         <param name="configure.url">/plugins/servlet/yaccHook/config</param>
     </plugin-info>
 
