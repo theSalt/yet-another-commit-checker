@@ -160,6 +160,19 @@ public class BitbucketServerRestClient {
         return responseToJson(response);
     }
 
+    public int deleteBranch(String repoSlug, String branchName) {
+        HttpDeleteWithEntity post = new HttpDeleteWithEntity(
+                buildUri("/rest/branch-utils/1.0/projects/%s/repos/%s/branches", PROJECT, repoSlug));
+
+        Map<String, String> params = new HashMap<>();
+        params.put("name", branchName);
+        post.setEntity(buildJsonEntity(params));
+
+        HttpResponse response = execute(post);
+
+        return response.getStatusLine().getStatusCode();
+    }
+
     private HttpResponse execute(HttpUriRequest request) {
         try {
             request.addHeader(new BasicScheme().authenticate(creds, request, null));
@@ -202,5 +215,16 @@ public class BitbucketServerRestClient {
         }
 
         return buildUri(uri);
+    }
+
+    private class HttpDeleteWithEntity extends HttpPost {
+        public HttpDeleteWithEntity(String uri) {
+            super(uri);
+        }
+
+        @Override
+        public String getMethod() {
+            return "DELETE";
+        }
     }
 }

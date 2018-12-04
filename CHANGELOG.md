@@ -1,5 +1,9 @@
 # YACC Changelog
 
+### 1.22 (2018-12-04)
+
+* Bugfix: Fix branch delete NPE by adding workaround for BBS trigger name bug (BSERV-11458, GH-202)
+
 ### 1.21 (2018-12-02)
 
 * Feature: Support for project-level configuration (GH-165)

@@ -87,5 +87,9 @@ public class YaccRule extends ExternalResource {
     public JsonObject createBranch(String branchName) {
         return restClient.createBranch(repoSlug, branchName);
     }
+
+    public int deleteBranch(String branchName) {
+        return restClient.deleteBranch(repoSlug, branchName);
+    }
 }
 
