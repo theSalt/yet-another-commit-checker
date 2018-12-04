@@ -38,6 +38,9 @@ public class BranchNameRegexOnCreateTest {
         String branchName = "branch_" + System.nanoTime();
         response = gitRepoRule.createBranch(branchName);
         assertSuccess(response, branchName);
+
+        // Make sure branch deletion wasn't affected
+        assertDeleteBranchSuccess(branchName);
     }
 
     @Test
@@ -52,6 +55,9 @@ public class BranchNameRegexOnCreateTest {
         String branchName = "branch_" + System.nanoTime();
         response = gitRepoRule.createBranch(branchName);
         assertSuccess(response, branchName);
+
+        // Make sure branch deletion wasn't affected
+        assertDeleteBranchSuccess(branchName);
     }
 
     @Test
@@ -78,6 +84,9 @@ public class BranchNameRegexOnCreateTest {
 
         String branchName = "global_" + System.nanoTime();
         assertSuccess(gitRepoRule.createBranch(branchName), branchName);
+
+        // Make sure branch deletion wasn't affected
+        assertDeleteBranchSuccess(branchName);
     }
 
     @Test
@@ -127,4 +136,11 @@ public class BranchNameRegexOnCreateTest {
         assertThat(response.getString("id"))
                 .contains(branchName);
     }
+
+    private void assertDeleteBranchSuccess(String branchName) {
+        int statusCode = gitRepoRule.deleteBranch(branchName);
+
+        assertThat(statusCode).isEqualTo(204);
+    }
+
 }

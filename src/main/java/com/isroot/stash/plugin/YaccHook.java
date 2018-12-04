@@ -45,7 +45,15 @@ public class YaccHook implements PreRepositoryHook {
 
         if (trigger == StandardRepositoryHookTrigger.REPO_PUSH) {
             return handleRepositoryPush(context, (RepositoryPushHookRequest) repositoryHookRequest);
-        } else if (trigger == StandardRepositoryHookTrigger.BRANCH_CREATE) {
+        } else if (trigger == StandardRepositoryHookTrigger.BRANCH_CREATE
+                && repositoryHookRequest instanceof BranchCreationHookRequest) {
+
+            // sford: Note: Both trigger BRANCH_CREATE and class BranchCreationHookRequest both
+            // need to be checked because BBS has a bug where BranchDeletionHookRequest is marked
+            // as BRANCH_CREATE.
+            //
+            // See: https://jira.atlassian.com/browse/BSERV-11458
+
             return handleBranchCreation(context.getSettings(),
                     (BranchCreationHookRequest) repositoryHookRequest);
         }
