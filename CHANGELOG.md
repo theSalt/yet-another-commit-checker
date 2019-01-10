@@ -1,5 +1,9 @@
 # YACC Changelog
 
+### 1.23 (2019-01-09)
+
+* Feature: Data center support re-enabled. YACC is now an Atlassian-approved Data Center plugin.
+
 ### 1.22 (2018-12-04)
 
 * Bugfix: Fix branch delete NPE by adding workaround for BBS trigger name bug (BSERV-11458, GH-202)
