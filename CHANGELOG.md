@@ -2,7 +2,7 @@
 
 ### 1.23 (2019-01-09)
 
-* Feature: Data center support re-enabled. YACC is now an Atlassian-approved Data Center plugin.
+* Feature: Data center support re-enabled. YACC is now an Atlassian-approved Data Center plugin. (GH-205)
 
 ### 1.22 (2018-12-04)
 
