@@ -320,7 +320,7 @@ public class YaccServiceImpl implements YaccService {
                 errors.addAll(checkJiraIssue(settings, issueKey));
             }
         } else {
-            errors.add(new YaccError("No JIRA Issue found in commit message."));
+            errors.add(new YaccError(YaccError.Type.NO_JIRA_ISSUE, "No JIRA Issue found in commit message"));
         }
 
         return errors;

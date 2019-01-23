@@ -233,7 +233,7 @@ public class YaccServiceImplTest {
                 "this commit message has no jira issues. abc-123 is not a valid issue because it is lowercase.");
 
         List<YaccError> errors = yaccService.checkCommit(settings, commit, null);
-        assertThat(errors).containsOnly(new YaccError("No JIRA Issue found in commit message."));
+        assertThat(errors).containsOnly(new YaccError(YaccError.Type.NO_JIRA_ISSUE,"No JIRA Issue found in commit message"));
     }
 
     @Test
@@ -270,7 +270,7 @@ public class YaccServiceImplTest {
                 "this commit message has no jira issues. UTF-8 is not a valid issue because it has an invalid project key.");
 
         List<YaccError> errors = yaccService.checkCommit(settings, commit, null);
-        assertThat(errors).containsOnly(new YaccError("No JIRA Issue found in commit message."));
+        assertThat(errors).containsOnly(new YaccError(YaccError.Type.NO_JIRA_ISSUE,"No JIRA Issue found in commit message"));
     }
 
     @Test
