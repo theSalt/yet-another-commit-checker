@@ -183,8 +183,19 @@ public abstract class YaccSettingsCommon extends BitbucketPage {
         return this;
     }
 
+    public YaccSettingsCommon setErrorMessageNoJiraIssue(String value) {
+        errorMessageNoJiraIssue.clear();
+        errorMessageNoJiraIssue.type(value);
+        return this;
+    }
+
     public YaccSettingsCommon verifyErrorMessageIssueJql(String value) {
         assertThat(errorMessageIssueJql.getValue()).isEqualTo(value);
+        return this;
+    }
+
+    public YaccSettingsCommon verifyErrorMessageNoJiraIssue(String value) {
+        assertThat(errorMessageNoJiraIssue.getValue()).isEqualTo(value);
         return this;
     }
 
@@ -288,6 +299,7 @@ public abstract class YaccSettingsCommon extends BitbucketPage {
         setErrorMessageFooter("");
         setErrorMessageHeader("");
         setErrorMessageIssueJql("");
+        setErrorMessageNoJiraIssue("");
 
         return this;
     }
