@@ -13,6 +13,7 @@ public class YaccError {
         COMMITTER_EMAIL_REGEX,
         COMMIT_REGEX,
         ISSUE_JQL,
+        NO_JIRA_ISSUE,
         BRANCH_NAME,
         OTHER
     }

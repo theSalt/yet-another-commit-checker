@@ -139,6 +139,15 @@
   {/call}
 
   {call aui.form.textareaField}
+    {param id: 'errorMessage.NO_JIRA_ISSUE' /}
+    {param labelContent: 'No Jira Issue Error' /}
+    {param value: $config['errorMessage.NO_JIRA_ISSUE'] /}
+    {param errorTexts: $errors ? $errors['errorMessage.NO_JIRA_ISSUE'] : null /}
+    {param descriptionText: 'If present, this text will be shown when No Jira Issue is triggered.' /}
+    {param rows: '4' /}
+  {/call}
+
+  {call aui.form.textareaField}
     {param id: 'errorMessage.BRANCH_NAME' /}
     {param labelContent: 'Branch Name Regex Error' /}
     {param value: $config['errorMessage.BRANCH_NAME'] /}

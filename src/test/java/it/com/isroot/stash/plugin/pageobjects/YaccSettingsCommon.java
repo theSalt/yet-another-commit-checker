@@ -49,6 +49,9 @@ public abstract class YaccSettingsCommon extends BitbucketPage {
     @ElementBy(id = "errorMessage.ISSUE_JQL")
     private PageElement errorMessageIssueJql;
 
+    @ElementBy(id = "errorMessage.NO_JIRA_ISSUE")
+    private PageElement errorMessageNoJiraIssue;
+
     @ElementBy(id = "errorMessage.BRANCH_NAME")
     private PageElement errorMessageBranchName;
 
