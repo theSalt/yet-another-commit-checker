@@ -12,6 +12,7 @@ import com.atlassian.bitbucket.hook.repository.RepositoryPushHookRequest;
 import com.atlassian.bitbucket.hook.repository.StandardRepositoryHookTrigger;
 import com.atlassian.bitbucket.permission.Permission;
 import com.atlassian.bitbucket.repository.Repository;
+import com.atlassian.bitbucket.scope.Scopes;
 import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.user.SecurityService;
 import com.atlassian.bitbucket.util.UncheckedOperation;
@@ -57,7 +58,8 @@ public class YaccGlobalHook implements PreRepositoryHook {
 
         RepositoryHook hook = securityService.withPermission(Permission.REPO_ADMIN, "Get plugin configuration").call(new UncheckedOperation<RepositoryHook>() {
             public RepositoryHook perform() {
-                return repositoryHookService.getByKey(repository, "com.isroot.stash.plugin.yacc:yaccHook");
+                return repositoryHookService.getByKey(Scopes.repository(repository),
+                        "com.isroot.stash.plugin.yacc:yaccHook");
             }
         });
 
