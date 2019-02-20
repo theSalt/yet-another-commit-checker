@@ -1,7 +1,8 @@
 # YACC Changelog
 
-### 1.24 (UNRELEASED)
+### 1.24 (2019-02-19)
 
+* Feature: Support Bitbucket Server 6
 * Feature: Support for custom error message for "No JIRA issue" errors.
 Thanks [@crazy-max](https://github.com/crazy-max)!
 
