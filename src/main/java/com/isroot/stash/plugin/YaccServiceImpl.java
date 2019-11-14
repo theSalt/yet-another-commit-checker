@@ -400,7 +400,7 @@ public class YaccServiceImpl implements YaccService {
         log.debug("requireMatchingAuthorName={} authorName={} stashName={}", requireMatchingAuthorName, commit.getCommitter().getName(),
                 stashUser.getDisplayName());
 
-        String name = removeGitCrud(stashUser.getDisplayName());
+        String name = removeGitCrud(stashUser.getName());
 
         if (requireMatchingAuthorName && !commit.getCommitter().getName().equalsIgnoreCase(name)) {
             errors.add(new YaccError(YaccError.Type.COMMITTER_NAME,
