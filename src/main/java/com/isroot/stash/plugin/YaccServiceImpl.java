@@ -431,6 +431,9 @@ public class YaccServiceImpl implements YaccService {
 
             // remove trailing crud
             name = name.replaceAll("[\\\\.,:;\"']*$", "");
+            
+            // remove sapce
+            name = name.replaceAll(" ", "");
         }
 
         return name;
